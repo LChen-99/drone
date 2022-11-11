@@ -1,0 +1,12 @@
+<launch>
+    <!-- number of moving objects -->
+    <arg name="obj_num" value="10" />
+    <arg name="drone_id" value="0"/>
+    <!-- trajectory server -->
+    <node pkg="ego_planner" name="drone_$(arg drone_id)_traj_generator" type="traj_generator" output="screen">
+        <!-- <remap from="position_cmd" to="/setpoints_cmd"/> -->
+        <!--<remap from="~odom" to="/vins_fusion/imu_propagate"/> -->
+        <remap from="~planning/bspline" to="drone_$(arg drone_id)_planning/bspline"/>
+        <param name="traj_server/time_forward" value="1.0" type="double"/>
+    </node>
+</launch>
