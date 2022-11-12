@@ -15,14 +15,14 @@ int main(int argc, char *argv[])
 
     signal(SIGINT, mySigintHandler);
     ros::Duration(1.0).sleep();
-    std::string prefix = "/iris_0";
+    
     Parameter_t param;
     param.config_from_ros_handle(nh);
-
+    std::string prefix = param.prefix;
     // Controller controller(param);
     LinearControl controller(param);
     PX4CtrlFSM fsm(param, controller);
-
+    fsm.collector = Collector(param.csv_filename);
     ros::Subscriber state_sub =
         nh.subscribe<mavros_msgs::State>(prefix + "/mavros/state",
                                          10,
@@ -127,10 +127,7 @@ int main(int argc, char *argv[])
     {
         r.sleep();
         ros::spinOnce();
-        Eigen::Vector3d vel(fsm.odom_data.v);
-        Eigen::Quaterniond q(fsm.odom_data.q);
-        Eigen::Vector4d pwm(fsm.pwm_data.pwm[0], fsm.pwm_data.pwm[1], fsm.pwm_data.pwm[2], fsm.pwm_data.pwm[3]);
-        ROS_INFO("vel = %lf, %lf, %lf, q = %lf, %lf, %lf, %lf, pwm = %lf, %lf, %lf, %lf", vel(0), vel(1), vel(2), q.w(), q.x(), q.y(), q.z(), pwm[0], pwm[1], pwm[2], pwm[3]);
+        
         fsm.process(); // We DO NOT rely on feedback as trigger, since there is no significant performance difference through our test.
     }
 

@@ -6,6 +6,9 @@ Parameter_t::Parameter_t()
 
 void Parameter_t::config_from_ros_handle(const ros::NodeHandle &nh)
 {
+	
+	read_essential_param(nh, "prefix", prefix);
+	read_essential_param(nh, "csv_filename", csv_filename);
 	read_essential_param(nh, "gain/Kp0", gain.Kp0);
 	read_essential_param(nh, "gain/Kp1", gain.Kp1);
 	read_essential_param(nh, "gain/Kp2", gain.Kp2);

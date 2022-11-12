@@ -66,3 +66,6 @@ msg_timeout:
     cmd:  0.5
     imu:  0.5
     bat:  0.5
+
+csv_filename:   "/home/luochen/drone-project/data.csv"
+prefix: "/iris_0"

@@ -9,7 +9,7 @@
 #include <mavros_msgs/SetMode.h>
 #include <mavros_msgs/CommandLong.h>
 #include <mavros_msgs/CommandBool.h>
-
+#include "collector.h"
 #include "input.h"
 // #include "ThrustCurve.h"
 #include "controller.h"
@@ -41,7 +41,7 @@ public:
 	Takeoff_Land_Data_t takeoff_land_data;
 
 	LinearControl &controller;
-
+	Collector collector;
 	ros::Publisher traj_start_trigger_pub;
 	ros::Publisher ctrl_FCU_pub;
 	ros::Publisher debug_pub; //debug
@@ -73,7 +73,17 @@ public:
 	bool recv_new_odom();
 	State_t get_state() { return state; }
 	bool get_landed() { return takeoff_land.landed; }
-
+	void writeCurState(const Controller_Output_t u){
+		double thrust = u.thrust;
+		Eigen::Vector3d vel(this->odom_data.v);
+		Eigen::Quaterniond q(this->odom_data.q);
+		Eigen::Vector4d pwm(this->pwm_data.pwm[0], this->pwm_data.pwm[1], this->pwm_data.pwm[2], this->pwm_data.pwm[3]);
+		collector.outfile << ros::Time::now().toSec() << ",";
+		collector.outfile << "\"[" << vel(0) << "," << vel(1) << "," << vel(2) << "]\",";
+		collector.outfile << "\"[" << q.w() << "," << q.x() << "," << q.y() << "," << q.z() << "]\",";
+		collector.outfile << "\"[" << pwm(0) << "," << pwm(1) << "," << pwm(2) << "]\",";
+		collector.outfile  << thrust << std::endl;
+	}
 private:
 	State_t state; // Should only be changed in PX4CtrlFSM::process() function!
 	AutoTakeoffLand_t takeoff_land;

@@ -2,10 +2,12 @@
 #define __PX4CTRLPARAM_H
 
 #include <ros/ros.h>
-
+#include <string>
 class Parameter_t
 {
 public:
+	std::string csv_filename;
+	std::string prefix;
 	struct Gain
 	{
 		double Kp0, Kp1, Kp2;
