@@ -1,0 +1,12 @@
+<launch>
+	<!-- <node name="vins_fusion" pkg="vins"  type="vins_node" output="screen" args="$(find vins)/../config/fast_drone_250.yaml"/> -->
+
+	<node name="loop_fusion" pkg="loop_fusion"  type="loop_fusion_node" args="$(find vins)/../config/fast_drone_250.yaml" output="screen">
+			<remap from="/vins_estimator/odometry" to="/vins_fusion/odometry" />
+			<remap from="/vins_estimator/keyframe_pose" to="/vins_fusion/keyframe_pose" />
+			<remap from="/vins_estimator/extrinsic" to="/vins_fusion/extrinsic" />
+			<remap from="/vins_estimator/keyframe_point" to="/vins_fusion/keyframe_point" />
+			<remap from="/vins_estimator/margin_cloud" to="/vins_fusion/margin_cloud" />
+	</node>
+
+</launch> 
