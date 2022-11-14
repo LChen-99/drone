@@ -334,7 +334,7 @@ void PX4CtrlFSM::process()
 		publish_attitude_ctrl(u, now_time);
 	}
 	// record states
-	this->writeCurState(u);
+	this->writeCurState(u, now_time);
 	// STEP5: Detect if the drone has landed
 	land_detector(state, des, odom_data);
 	// cout << takeoff_land.landed << " ";

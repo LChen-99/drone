@@ -73,16 +73,18 @@ public:
 	bool recv_new_odom();
 	State_t get_state() { return state; }
 	bool get_landed() { return takeoff_land.landed; }
-	void writeCurState(const Controller_Output_t u){
-		double thrust = u.thrust;
-		Eigen::Vector3d vel(this->odom_data.v);
-		Eigen::Quaterniond q(this->odom_data.q);
-		Eigen::Vector4d pwm(this->pwm_data.pwm[0], this->pwm_data.pwm[1], this->pwm_data.pwm[2], this->pwm_data.pwm[3]);
-		collector.outfile << ros::Time::now().toSec() << ",";
+	void writeCurState (const Controller_Output_t u, const ros::Time& now_time){
+
+		Eigen::Vector3d pos(odom_data.p);
+		Eigen::Vector3d vel(odom_data.v);
+		Eigen::Quaterniond q(odom_data.q);
+		Eigen::Vector4d pwm(pwm_data.pwm[0], pwm_data.pwm[1], pwm_data.pwm[2], pwm_data.pwm[3]);
+		collector.outfile << now_time << ",";
+		collector.outfile << "\"[" << pos(0) << "," << pos(1) << "," << pos(2) << "]\",";
 		collector.outfile << "\"[" << vel(0) << "," << vel(1) << "," << vel(2) << "]\",";
 		collector.outfile << "\"[" << q.w() << "," << q.x() << "," << q.y() << "," << q.z() << "]\",";
-		collector.outfile << "\"[" << pwm(0) << "," << pwm(1) << "," << pwm(2) << "]\",";
-		collector.outfile  << thrust << std::endl;
+		collector.outfile << "\"[" << pwm(0) << "," << pwm(1) << "," << pwm(2) <<  "," << pwm(3) << "]\",";
+		collector.outfile  << u.thrust << std::endl;
 	}
 private:
 	State_t state; // Should only be changed in PX4CtrlFSM::process() function!

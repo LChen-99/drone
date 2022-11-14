@@ -129,7 +129,7 @@ void posCallback(const nav_msgs::Odometry::ConstPtr &msg){
 }
 void circle_generate(){
   int sample_time = traj_duration_ / T;
-  double radius = 1;
+  double radius = 0.5;
   
   traj_pos = vector<Eigen::Vector3d>(sample_time, Eigen::Vector3d::Zero());
   traj_vel = vector<Eigen::Vector3d>(sample_time, Eigen::Vector3d::Zero());

@@ -13,6 +13,9 @@ build/
 vins_output/
 3rd_party/
 devel/
+
+*.launch
+*.yaml
 .mtj.tmp/# Package Files #
 *.jar
 *.war
