@@ -130,10 +130,13 @@ LinearControl::estimateThrustModel(
     
     /***********************************/
     /* Model: est_a(2) = thr1acc_ * thr */
+    /* Model: est_a.norm() = thr1acc_ * thr */
     /***********************************/
+    // 悬停和静止时imu [0, 0, g]
     double gamma = 1 / (rho2_ + thr * P_ * thr);
     double K = gamma * P_ * thr;
-    thr2acc_ = thr2acc_ + K * (est_a(2) - thr * thr2acc_);
+    thr2acc_ = thr2acc_ + K * (est_a.norm() - thr * thr2acc_);
+    // thr2acc_ = thr2acc_ + K * (est_a(2) - thr * thr2acc_);
     P_ = (1 - K * thr) * P_ / rho2_;
     //printf("%6.3f,%6.3f,%6.3f,%6.3f\n", thr2acc_, gamma, K, P_);
     //fflush(stdout);
