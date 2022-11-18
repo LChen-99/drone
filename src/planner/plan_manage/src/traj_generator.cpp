@@ -5,7 +5,7 @@
 #include "std_msgs/Empty.h"
 #include "visualization_msgs/Marker.h"
 #include <ros/ros.h>
-
+#include <plan_manage/generator.h>
 #include <math.h>
 ros::Publisher pos_cmd_pub;
 ros::Subscriber initial_pos_sub;
@@ -31,6 +31,7 @@ Eigen::Vector3d initial_pos;
 double initial_yaw;
 Eigen::Vector3d cur_pos;
 double cur_yaw;
+TrajGenerator generator;
 void cmdCallback(const ros::TimerEvent &e)
 {
   /* no publishing before receive traj_ */
@@ -41,13 +42,16 @@ void cmdCallback(const ros::TimerEvent &e)
   double t_cur = (time_now - start_time_).toSec();
   Eigen::Vector3d pos(Eigen::Vector3d::Zero()), vel(Eigen::Vector3d::Zero()), acc(Eigen::Vector3d::Zero()), pos_f;
   std::pair<double, double> yaw_yawdot(0, 0);
-
+  int points_size = generator.traj_pos_.size();
   static ros::Time time_last = ros::Time::now();
-  if (times < traj_pos.size())
+  if (times < points_size)
   {
-    pos = traj_pos[times];
-    vel = traj_vel[times];
-    acc = traj_acc[times];
+    pos = generator.traj_pos_[times];
+    vel = generator.traj_vel_[times];
+    acc = generator.traj_acc_[times];
+    // pos = traj_pos[times];
+    // vel = traj_vel[times];
+    // acc = traj_acc[times];
     /*** calculate yaw ***/
     //yaw_yawdot = calculate_yaw(t_cur, pos, time_now, time_last);
     /*** calculate yaw ***/
@@ -55,10 +59,10 @@ void cmdCallback(const ros::TimerEvent &e)
     //double tf = min(traj_duration_, t_cur + 2.0);
    // pos_f = traj_[0].evaluateDeBoorT(tf);
   }
-  else if (times >= traj_pos.size())
+  else if (times >= points_size)
   {
     /* hover when finish traj_ */
-    pos = cur_pos;
+    pos = generator.traj_pos_[points_size - 1];
     vel.setZero();
     acc.setZero();
     
@@ -66,7 +70,7 @@ void cmdCallback(const ros::TimerEvent &e)
     //yaw_yawdot.second = 0;
 
     //pos_f = pos;
-    return;
+    //return;
   }
   else
   {
@@ -78,7 +82,7 @@ void cmdCallback(const ros::TimerEvent &e)
   cmd.header.frame_id = "world";
   cmd.trajectory_flag = quadrotor_msgs::PositionCommand::TRAJECTORY_STATUS_READY;
   cmd.trajectory_id = traj_id_;
-  ROS_INFO("initial_pos = %lf, initial_pos = %lf, initial_pos = %lf", initial_pos(0), initial_pos(1), initial_pos(2));
+  //ROS_INFO("initial_pos = %lf, initial_pos = %lf, initial_pos = %lf", initial_pos(0), initial_pos(1), initial_pos(2));
   cmd.position.x = pos(0) + initial_pos(0);
   cmd.position.y = pos(1) + initial_pos(1);
   cmd.position.z = pos(2) + initial_pos(2);
@@ -97,7 +101,6 @@ void cmdCallback(const ros::TimerEvent &e)
   last_yaw_ = cmd.yaw;
   //ROS_INFO("initial_pos = %lf, initial_pos = %lf, initial_pos = %lf", initial_pos(0), initial_pos(1), initial_pos(2));
   //ROS_INFO("des_x = %lf, des_y = %lf, des_z = %lf", pos(0), pos(1), pos(2));
-  
   if(get_initialpos){
     times++;
     pos_cmd_pub.publish(cmd);
@@ -155,8 +158,12 @@ int main(int argc, char **argv)
   initial_pos_sub = nh.subscribe<nav_msgs::Odometry>("/vins_fusion/imu_propagate", 100, posCallback);
   pos_cmd_pub = nh.advertise<quadrotor_msgs::PositionCommand>("/position_cmd", 50);
   ros::Duration(0.5).sleep();
-  
-  circle_generate();
+  Matrix<double, 3, 3> waypoints;
+  waypoints << 0, 0, 0,\
+               -1, 0, -1,\
+               -2, -1, -2;
+  generator.Generator(waypoints.transpose());
+  // circle_generate();
   ros::Timer cmd_timer = nh.createTimer(ros::Duration(T), cmdCallback);
 
   /* control parameter */

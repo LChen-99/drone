@@ -27,7 +27,7 @@ void TrajGenerator::Generator(MatrixXd waypoints){
     traj_vel_.resize(traj_time_[size - 1] / T_);
     traj_acc_.resize(traj_time_[size - 1] / T_);
     for(int i = 0; i < traj_pos_.size(); i++){
-        int t = T_ * i;
+        double t = T_ * i;
         vector<Vector3d>  pva = PolyFunc(t);
         traj_pos_[i] = pva[0];
         traj_vel_[i] = pva[1];
