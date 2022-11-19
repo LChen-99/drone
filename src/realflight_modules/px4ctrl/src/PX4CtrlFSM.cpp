@@ -4,7 +4,7 @@
 using namespace std;
 using namespace uav_utils;
 
-PX4CtrlFSM::PX4CtrlFSM(Parameter_t &param_, LinearControl &controller_) : param(param_), controller(controller_) /*, thrust_curve(thrust_curve_)*/
+PX4CtrlFSM::PX4CtrlFSM(Parameter_t &param_, LinearControl &controller_, NeuControl &neucontroller_) : param(param_), controller(neucontroller_), controller_2(controller_) /*, thrust_curve(thrust_curve_)*/
 {
 	state = MANUAL_CTRL;
 	hover_pose.setZero();
@@ -213,7 +213,7 @@ void PX4CtrlFSM::process()
 		}
 		
 		
-		ROS_INFO("GET des success\n");
+		//ROS_INFO("GET des success\n");
 		if (takeoff_land_data.triggered && takeoff_land_data.takeoff_land_cmd == quadrotor_msgs::TakeoffLand::LAND)
 		{
 			ROS_ERROR("[px4ctrl] Reject AUTO_LAND, which must be triggered in AUTO_HOVER. \

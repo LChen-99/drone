@@ -39,7 +39,7 @@ void cmdCallback(const ros::TimerEvent &e)
     return;
 
   ros::Time time_now = ros::Time::now();
-  double t_cur = (time_now - start_time_).toSec();
+  //double t_cur = (time_now - start_time_).toSec();
   Eigen::Vector3d pos(Eigen::Vector3d::Zero()), vel(Eigen::Vector3d::Zero()), acc(Eigen::Vector3d::Zero()), pos_f;
   std::pair<double, double> yaw_yawdot(0, 0);
   int points_size = generator.traj_pos_.size();
@@ -160,8 +160,8 @@ int main(int argc, char **argv)
   ros::Duration(0.5).sleep();
   Matrix<double, 3, 3> waypoints;
   waypoints << 0, 0, 0,\
-               -1, 0, -1,\
-               -2, -1, -2;
+               1, 0, 1,\
+               2, 1, 2;
   generator.Generator(waypoints.transpose());
   // circle_generate();
   ros::Timer cmd_timer = nh.createTimer(ros::Duration(T), cmdCallback);

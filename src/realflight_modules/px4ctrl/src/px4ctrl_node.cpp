@@ -20,8 +20,10 @@ int main(int argc, char *argv[])
     param.config_from_ros_handle(nh);
     std::string prefix = param.prefix;
     // Controller controller(param);
-    LinearControl controller(param);
-    PX4CtrlFSM fsm(param, controller);
+    LinearControl controller_1(param);
+    NeuControl controller_2(param);
+    PX4CtrlFSM fsm(param, controller_1, controller_2);
+    // PX4CtrlFSM fsm(param, controller);
     fsm.collector = Collector(param.csv_filename);
     ros::Subscriber state_sub =
         nh.subscribe<mavros_msgs::State>(prefix + "/mavros/state",

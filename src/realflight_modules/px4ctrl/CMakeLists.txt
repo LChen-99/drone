@@ -35,6 +35,7 @@ add_executable(px4ctrl_node
   src/PX4CtrlFSM.cpp
   src/PX4CtrlParam.cpp
   src/controller.cpp
+  src/neucontroller.cpp
   src/input.cpp
 )
 

@@ -10,6 +10,7 @@
 #include <mavros_msgs/CommandLong.h>
 #include <mavros_msgs/CommandBool.h>
 #include "collector.h"
+#include "neucontroller.h"
 #include "input.h"
 // #include "ThrustCurve.h"
 #include "controller.h"
@@ -39,8 +40,9 @@ public:
 	Command_Data_t cmd_data;
 	Battery_Data_t bat_data;
 	Takeoff_Land_Data_t takeoff_land_data;
-
-	LinearControl &controller;
+	// 先换一下用来测试
+	NeuControl &controller;
+	LinearControl &controller_2;
 	Collector collector;
 	ros::Publisher traj_start_trigger_pub;
 	ros::Publisher ctrl_FCU_pub;
@@ -62,8 +64,7 @@ public:
 		AUTO_TAKEOFF,
 		AUTO_LAND
 	};
-
-	PX4CtrlFSM(Parameter_t &, LinearControl &);
+	PX4CtrlFSM(Parameter_t &, LinearControl &, NeuControl &);
 	void process();
 	bool rc_is_received(const ros::Time &now_time);
 	bool cmd_is_received(const ros::Time &now_time);

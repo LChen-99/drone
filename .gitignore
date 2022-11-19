@@ -13,7 +13,7 @@ build/
 vins_output/
 3rd_party/
 devel/
-
+.vscode/
 *.launch
 *.yaml
 .mtj.tmp/# Package Files #
