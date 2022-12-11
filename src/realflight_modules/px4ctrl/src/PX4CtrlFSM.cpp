@@ -340,7 +340,8 @@ void PX4CtrlFSM::process()
 		
 	}
 	// record states
-	if(!start_collecting_){
+	if(start_collecting_){
+		ROS_INFO("Strat collecting data");
 		this->writeCurState(u, now_time);
 	}
 	
