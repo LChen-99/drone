@@ -158,12 +158,13 @@ int main(int argc, char **argv)
   initial_pos_sub = nh.subscribe<nav_msgs::Odometry>("/vins_fusion/imu_propagate", 100, posCallback);
   pos_cmd_pub = nh.advertise<quadrotor_msgs::PositionCommand>("/position_cmd", 50);
   ros::Duration(0.5).sleep();
-  Matrix<double, 3, 3> waypoints;
-  waypoints << 0, 0, 0,\
-               1, 0, 1,\
-               2, 1, 2;
-  generator.Generator(waypoints.transpose());
-  // circle_generate();
+  // Matrix<double, 3, 3> waypoints;
+  // waypoints << 0, 0, 0,\
+  //              1, 0, 1,\
+  //              2, 1, 2;
+  // generator.Generator(waypoints.transpose());
+  generator.RandomGenerator();
+  
   ros::Timer cmd_timer = nh.createTimer(ros::Duration(T), cmdCallback);
 
   /* control parameter */

@@ -136,6 +136,10 @@ LinearControl::estimateThrustModel(
     double K = gamma * P_ * thr;
     thr2acc_ = thr2acc_ + K * (est_a(2) - thr * thr2acc_);
     P_ = (1 - K * thr) * P_ / rho2_;
+    if(param.thr_map.print_val){
+      ROS_INFO("thr2acc = %6.3f", thr2acc_);
+      //printf("%6.3f,%6.3f,%6.3f,%6.3f\n", thr2acc_, gamma, K, P_);
+    }
     //printf("%6.3f,%6.3f,%6.3f,%6.3f\n", thr2acc_, gamma, K, P_);
     //fflush(stdout);
 

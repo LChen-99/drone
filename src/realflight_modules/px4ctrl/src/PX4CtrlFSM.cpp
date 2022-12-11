@@ -4,9 +4,10 @@
 using namespace std;
 using namespace uav_utils;
 
-PX4CtrlFSM::PX4CtrlFSM(Parameter_t &param_, LinearControl &controller_, NeuControl &neucontroller_) : param(param_), controller(neucontroller_), controller_2(controller_) /*, thrust_curve(thrust_curve_)*/
+PX4CtrlFSM::PX4CtrlFSM(Parameter_t &param_, LinearControl &controller_, NeuControl &neucontroller_) : param(param_), controller(controller_), controller_2(neucontroller_) /*, thrust_curve(thrust_curve_)*/
 {
 	state = MANUAL_CTRL;
+	start_collecting_ = false;
 	hover_pose.setZero();
 }
 
@@ -308,8 +309,9 @@ void PX4CtrlFSM::process()
 	if (state == AUTO_HOVER || state == CMD_CTRL)
 	{
 		// controller.estimateThrustModel(imu_data.a, bat_data.volt, param);
-		controller.estimateThrustModel(imu_data.a, param);
-
+		if(!start_collecting_){
+			controller.estimateThrustModel(imu_data.a, param);
+		}
 	}
 
 	// STEP3: solve and update new control commands
@@ -328,13 +330,20 @@ void PX4CtrlFSM::process()
 	if (param.use_bodyrate_ctrl)
 	{
 		publish_bodyrate_ctrl(u, now_time);
+
+		
 	}
 	else
 	{
 		publish_attitude_ctrl(u, now_time);
+
+		
 	}
 	// record states
-	this->writeCurState(u, now_time);
+	if(!start_collecting_){
+		this->writeCurState(u, now_time);
+	}
+	
 	// STEP5: Detect if the drone has landed
 	land_detector(state, des, odom_data);
 	// cout << takeoff_land.landed << " ";
@@ -657,4 +666,11 @@ void PX4CtrlFSM::reboot_FCU()
 
 	// if (param.print_dbg)
 	// 	printf("reboot result=%d(uint8_t), success=%d(uint8_t)\n", reboot_srv.response.result, reboot_srv.response.success);
+}
+
+bool PX4CtrlFSM::doCollectReq(std_srvs::Trigger::Request& req, std_srvs::Trigger::Response& res){
+	ROS_INFO("In doCollectReq");
+	start_collecting_ = true;
+	res.success = true;
+	return true;
 }

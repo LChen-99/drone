@@ -6,6 +6,7 @@
 
 #include <geometry_msgs/PoseStamped.h>
 #include <nav_msgs/Odometry.h>
+#include <std_srvs/Trigger.h>
 #include <mavros_msgs/SetMode.h>
 #include <mavros_msgs/CommandLong.h>
 #include <mavros_msgs/CommandBool.h>
@@ -30,7 +31,7 @@ class PX4CtrlFSM
 {
 public:
 	Parameter_t &param;
-
+	bool start_collecting_;
 	RC_Data_t rc_data;
 	State_Data_t state_data;
 	ExtendedState_Data_t extended_state_data;
@@ -41,8 +42,8 @@ public:
 	Battery_Data_t bat_data;
 	Takeoff_Land_Data_t takeoff_land_data;
 	// 先换一下用来测试
-	NeuControl &controller;
-	LinearControl &controller_2;
+	NeuControl &controller_2;
+	LinearControl &controller;
 	Collector collector;
 	ros::Publisher traj_start_trigger_pub;
 	ros::Publisher ctrl_FCU_pub;
@@ -50,7 +51,7 @@ public:
 	ros::ServiceClient set_FCU_mode_srv;
 	ros::ServiceClient arming_client_srv;
 	ros::ServiceClient reboot_FCU_srv;
-
+	ros::ServiceServer collect_trigger;
 	quadrotor_msgs::Px4ctrlDebug debug_msg; //debug
 
 	Eigen::Vector4d hover_pose;
@@ -74,6 +75,8 @@ public:
 	bool recv_new_odom();
 	State_t get_state() { return state; }
 	bool get_landed() { return takeoff_land.landed; }
+	// server : start collecting
+	bool doCollectReq(std_srvs::Trigger::Request& req, std_srvs::Trigger::Response& resp);
 	void writeCurState (const Controller_Output_t u, const ros::Time& now_time){
 
 		Eigen::Vector3d pos(odom_data.p);
@@ -109,7 +112,7 @@ private:
 	bool toggle_offboard_mode(bool on_off); // It will only try to toggle once, so not blocked.
 	bool toggle_arm_disarm(bool arm); // It will only try to toggle once, so not blocked.
 	void reboot_FCU();
-
+	
 	void publish_bodyrate_ctrl(const Controller_Output_t &u, const ros::Time &stamp);
 	void publish_attitude_ctrl(const Controller_Output_t &u, const ros::Time &stamp);
 	void publish_trigger(const nav_msgs::Odometry &odom_msg);

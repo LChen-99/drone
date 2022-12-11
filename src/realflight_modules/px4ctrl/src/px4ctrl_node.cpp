@@ -88,7 +88,7 @@ int main(int argc, char *argv[])
     fsm.traj_start_trigger_pub = nh.advertise<geometry_msgs::PoseStamped>("/traj_start_trigger", 10);
 
     fsm.debug_pub = nh.advertise<quadrotor_msgs::Px4ctrlDebug>("/debugPx4ctrl", 10); // debug
-
+    fsm.collect_trigger = nh.advertiseService<std_srvs::Trigger::Request, std_srvs::Trigger::Response>("/collect_trigger", boost::bind(&PX4CtrlFSM::doCollectReq, &fsm, _1, _2)); 
     fsm.set_FCU_mode_srv = nh.serviceClient<mavros_msgs::SetMode>(prefix + "/mavros/set_mode");
     fsm.arming_client_srv = nh.serviceClient<mavros_msgs::CommandBool>(prefix + "/mavros/cmd/arming");
     fsm.reboot_FCU_srv = nh.serviceClient<mavros_msgs::CommandLong>(prefix + "/mavros/cmd/command");

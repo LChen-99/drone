@@ -12,6 +12,15 @@
 #include "input.h"
 #include <Eigen/Dense>
 
+
+class Control{
+public:
+	Control(Parameter_t &);
+	virtual quadrotor_msgs::Px4ctrlDebug calculateControl() = 0;
+
+	
+};
+
 struct Desired_State_t
 {
 	Eigen::Vector3d p;

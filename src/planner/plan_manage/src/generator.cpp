@@ -2,9 +2,10 @@
 #include <iostream>
 
 using namespace std;
-void TrajGenerator::Generator(MatrixXd waypoints){
-    int n = waypoints.cols();
+Traj TrajGenerator::Generator(const MatrixXd& waypoints){
 
+    int n = waypoints.cols();
+    Traj res;
     MatrixXd d = waypoints.block(0, 1, 3, n - 1) - waypoints.block(0, 0, 3, n - 1);
     MatrixXd d_square = (d.row(0).array()).pow(2) + (d.row(1).array()).pow(2) + (d.row(2).array()).pow(2);
  
@@ -19,23 +20,33 @@ void TrajGenerator::Generator(MatrixXd waypoints){
     for(int i = 1; i < n; i++){
         traj_time_[i] = d0(i - 1);
     }
-    Polynomial_coefficients_.push_back(CalcuCoef(waypoints.row(0)));
-    Polynomial_coefficients_.push_back(CalcuCoef(waypoints.row(1)));
-    Polynomial_coefficients_.push_back(CalcuCoef(waypoints.row(2)));
+    std::vector<Eigen::MatrixXd> Polynomial_coefficients;
+    Polynomial_coefficients.push_back(CalcuCoef(waypoints.row(0)));
+    Polynomial_coefficients.push_back(CalcuCoef(waypoints.row(1)));
+    Polynomial_coefficients.push_back(CalcuCoef(waypoints.row(2)));
     int size = traj_time_.size();
-    traj_pos_.resize(traj_time_[size - 1] / T_);
-    traj_vel_.resize(traj_time_[size - 1] / T_);
-    traj_acc_.resize(traj_time_[size - 1] / T_);
-    for(int i = 0; i < traj_pos_.size(); i++){
+    res.pos.resize(traj_time_[size - 1] / T_);
+    res.vel.resize(traj_time_[size - 1] / T_);
+    res.acc.resize(traj_time_[size - 1] / T_);
+    for(int i = 0; i < res.pos.size(); i++){
         double t = T_ * i;
-        vector<Vector3d>  pva = PolyFunc(t);
-        traj_pos_[i] = pva[0];
-        traj_vel_[i] = pva[1];
-        traj_acc_[i] = pva[2];
+        vector<Vector3d>  pva = PolyFunc(t, Polynomial_coefficients);
+        res.pos[i] = pva[0];
+        res.vel[i] = pva[1];
+        res.acc[i] = pva[2];
     }
+    return res;
 }
 
-MatrixXd TrajGenerator::CalcuCoef(MatrixXd waypoints){
+void TrajGenerator::RandomGenerator(){
+    Eigen::Matrix3d waypoints = Eigen::Matrix3d::Random() * 0.4;
+
+    Traj traj_ = Generator(waypoints);
+    traj_pos_ = traj_.pos;
+    traj_vel_ = traj_.vel;
+    traj_acc_ = traj_.acc;
+}
+MatrixXd TrajGenerator::CalcuCoef(const MatrixXd& waypoints){
     MatrixXd alpha;
     int n = waypoints.size() - 1;
     MatrixXd b = MatrixXd::Zero(8 * n, 1);
@@ -59,11 +70,8 @@ MatrixXd TrajGenerator::CalcuCoef(MatrixXd waypoints){
             b(row_index++) = 0;
         }
     }
-
     alpha = A.colPivHouseholderQr().solve(b);
-   
     // alpha = (A.inverse() * b).transpose();
-    
     return alpha;
 }
 
@@ -90,11 +98,10 @@ MatrixXd TrajGenerator::GetMatrixLine(int piecewise_th, int order, double start_
         0,      0,         0,           0,              0,        0,    2*3*4*5*6 /pow(T, 6),     2*3*4*5*6*7*((t-s)/T) /pow(T, 6);
     //std::cout << M << std::endl;
     res.block<1, 8>(0, piecewise_th * 8) = M.row(order);
-    
     return res;
 }
 
-vector<Vector3d> TrajGenerator::PolyFunc(double t){
+vector<Vector3d> TrajGenerator::PolyFunc(double t, std::vector<Eigen::MatrixXd>& Polynomial_coefficients){
     int n = traj_time_.size() - 1;  //n段多项式
     if(t >= traj_time_[n]){
         t = traj_time_[n];
@@ -113,9 +120,9 @@ vector<Vector3d> TrajGenerator::PolyFunc(double t){
     poly_v << 0,    (1/T),      2*((t-s)/T)/ T, 3*pow((t-s)/T, 2) / T,    4*pow((t-s)/T, 3) /T,    5*pow((t-s)/T, 4)/T,  6*pow((t-s)/T, 5)/T, 7*pow((t-s)/T, 6) /T;
     poly_a << 0,      0,         2/pow(T, 2),    2*3*((t-s)/T)/pow(T, 2),    3*4*pow((t-s)/T, 2) /pow(T, 2),    4*5*pow((t-s)/T, 3)/pow(T, 2), 5*6*pow((t-s)/T, 4) /pow(T, 2), 6*7*pow((t-s)/T, 5) /pow(T, 2);
     Matrix<double, 8, 1> coff_x, coff_y, coff_z;
-    coff_x = Polynomial_coefficients_[0].block<8, 1>(8 * t_index, 0);
-    coff_y = Polynomial_coefficients_[1].block<8, 1>(8 * t_index, 0);
-    coff_z = Polynomial_coefficients_[2].block<8, 1>(8 * t_index, 0);
+    coff_x = Polynomial_coefficients[0].block<8, 1>(8 * t_index, 0);
+    coff_y = Polynomial_coefficients[1].block<8, 1>(8 * t_index, 0);
+    coff_z = Polynomial_coefficients[2].block<8, 1>(8 * t_index, 0);
     p(0) = poly_p * coff_x;
     p(1) = poly_p * coff_y;
     p(2) = poly_p * coff_z;
