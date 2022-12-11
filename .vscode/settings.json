@@ -75,7 +75,8 @@
         "typeindex": "cpp",
         "typeinfo": "cpp",
         "valarray": "cpp",
-        "variant": "cpp"
+        "variant": "cpp",
+        "dense": "cpp"
     },
     "python.analysis.extraPaths": [
         "/home/luochen/Fast-Drone-250-master/devel/lib/python3/dist-packages",
