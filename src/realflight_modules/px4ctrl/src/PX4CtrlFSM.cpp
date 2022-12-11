@@ -4,13 +4,19 @@
 using namespace std;
 using namespace uav_utils;
 
-PX4CtrlFSM::PX4CtrlFSM(Parameter_t &param_, LinearControl &controller_, NeuControl &neucontroller_) : param(param_), controller(controller_), controller_2(neucontroller_) /*, thrust_curve(thrust_curve_)*/
+// PX4CtrlFSM::PX4CtrlFSM(Parameter_t &param_, LinearControl &controller_, NeuControl &neucontroller_) : param(param_), controller(controller_), controller_2(neucontroller_) /*, thrust_curve(thrust_curve_)*/
+// {
+// 	state = MANUAL_CTRL;
+// 	start_collecting_ = false;
+// 	hover_pose.setZero();
+// }
+PX4CtrlFSM::PX4CtrlFSM(Parameter_t &param_) : param(param_) /*, thrust_curve(thrust_curve_)*/
 {
 	state = MANUAL_CTRL;
+	controller = new SE3Controller(param_);
 	start_collecting_ = false;
 	hover_pose.setZero();
 }
-
 /* 
         Finite State Machine
 
@@ -69,7 +75,7 @@ void PX4CtrlFSM::process()
 			}
 
 			state = AUTO_HOVER;
-			controller.resetThrustMapping();
+			controller->resetThrustMapping();
 			//设置悬停位姿为当前odom位姿
 			set_hov_with_odom();
 			toggle_offboard_mode(true);
@@ -118,7 +124,7 @@ void PX4CtrlFSM::process()
 			}
 
 			state = AUTO_TAKEOFF;
-			controller.resetThrustMapping();
+			controller->resetThrustMapping();
 			set_start_pose_for_takeoff_land(odom_data);
 			toggle_offboard_mode(true);				  // toggle on offboard before arm
 			for (int i = 0; i < 10 && ros::ok(); ++i) // wait for 0.1 seconds to allow mode change by FMU // mark
@@ -310,7 +316,7 @@ void PX4CtrlFSM::process()
 	{
 		// controller.estimateThrustModel(imu_data.a, bat_data.volt, param);
 		if(!start_collecting_){
-			controller.estimateThrustModel(imu_data.a, param);
+			controller->estimateThrustModel(imu_data.a, param);
 		}
 	}
 
@@ -321,7 +327,7 @@ void PX4CtrlFSM::process()
 	}
 	else
 	{
-		debug_msg = controller.calculateControl(des, odom_data, imu_data, u);
+		debug_msg = controller->calculateControl(des, odom_data, imu_data, u);
 		debug_msg.header.stamp = now_time;
 		debug_pub.publish(debug_msg);
 	}

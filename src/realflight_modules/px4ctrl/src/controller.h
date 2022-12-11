@@ -13,13 +13,6 @@
 #include <Eigen/Dense>
 
 
-class Control{
-public:
-	Control(Parameter_t &);
-	virtual quadrotor_msgs::Px4ctrlDebug calculateControl() = 0;
-
-	
-};
 
 struct Desired_State_t
 {
@@ -89,4 +82,64 @@ private:
 };
 
 
+
+class Controller{
+public:
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+	Controller(Parameter_t & param);
+	virtual quadrotor_msgs::Px4ctrlDebug calculateControl(const Desired_State_t &des,
+      const Odom_Data_t &odom,
+      const Imu_Data_t &imu, 
+      Controller_Output_t &u);
+	bool estimateThrustModel(const Eigen::Vector3d &est_v,
+      const Parameter_t &param);
+	void resetThrustMapping(void);
+	Parameter_t param_;
+	quadrotor_msgs::Px4ctrlDebug debug_msg_;
+	static double thr2acc_;
+	static double P_;
+
+	
+	
+	std::queue<std::pair<ros::Time, double>> timed_thrust_;
+	static constexpr double kMinNormalizedCollectiveThrust_ = 3.0;
+
+	// Thrust-accel mapping params
+	static constexpr double rho2_ = 0.998; // do not change
+	
+
+	double computeDesiredCollectiveThrustSignal(const Eigen::Vector3d &des_acc);
+	double fromQuaternion2yaw(Eigen::Quaterniond q);
+private:
+};
+
+
+class LinearController : public Controller
+{
+public:
+  LinearController(Parameter_t& param) : Controller(param){}
+  quadrotor_msgs::Px4ctrlDebug calculateControl(const Desired_State_t &des,
+      const Odom_Data_t &odom,
+      const Imu_Data_t &imu, 
+      Controller_Output_t &u);
+
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+private:
+
+};
+class SE3Controller : public Controller
+{
+public:
+  SE3Controller(Parameter_t& param) : Controller(param){}
+  quadrotor_msgs::Px4ctrlDebug calculateControl(const Desired_State_t &des,
+      const Odom_Data_t &odom,
+      const Imu_Data_t &imu, 
+      Controller_Output_t &u);
+
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+private:
+
+};
 #endif
