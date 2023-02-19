@@ -7,7 +7,7 @@
 # BlueJ files
 *.ctxt
 
-
+*.json
 # Mobile Tools for Java (J2ME)
 build/
 vins_output/

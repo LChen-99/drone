@@ -20,7 +20,9 @@
 #include "estimator/estimator.h"
 #include "estimator/parameters.h"
 #include "utility/visualization.h"
-
+#include <Eigen/Eigen>
+#include "tf2_ros/transform_broadcaster.h"
+#include <geometry_msgs/PoseWithCovarianceStamped.h>
 Estimator estimator;
 
 queue<sensor_msgs::ImuConstPtr> imu_buf;
@@ -220,13 +222,50 @@ void cam_switch_callback(const std_msgs::BoolConstPtr &switch_msg)
     }
     return;
 }
+void tf_timer_callback(const ros::WallTimerEvent& publish_sec){
+    static tf2_ros::TransformBroadcaster broadcaster;
+    geometry_msgs::TransformStamped tfs;
+
+    tfs.header.frame_id = "iris_0/base_link";
+    tfs.header.stamp = ros::Time::now();
+
+    //  |----坐标系 ID
+    tfs.child_frame_id = "camera";
+
+    //  |----坐标系相对信息设置
+    tfs.transform.translation.x = estimator.tic[0][0];
+    tfs.transform.translation.y = estimator.tic[0][1];
+    tfs.transform.translation.z = estimator.tic[0][2];// 二维实现，pose 中没有z，z 是 0
+    //  |--------- 四元数设置
+    Eigen::Quaterniond q(estimator.ric[0]);
+    
+    tfs.transform.rotation.x = q.x();
+    tfs.transform.rotation.y = q.y();
+    tfs.transform.rotation.z = q.z();
+    tfs.transform.rotation.w = q.w();
+    broadcaster.sendTransform(tfs);
+    geometry_msgs::TransformStamped tfs_w_m;
+
+    tfs_w_m.header.frame_id = "map";
+    tfs_w_m.header.stamp = ros::Time::now();
+    tfs_w_m.transform.translation.x = 0;
+    tfs_w_m.transform.translation.y = 0;
+    tfs_w_m.transform.translation.z = 0;
+    //  |----坐标系 ID
+    tfs_w_m.transform.rotation.x = 0;
+    tfs_w_m.transform.rotation.y = 0;
+    tfs_w_m.transform.rotation.z = 0;
+    tfs_w_m.transform.rotation.w = 1;
+    tfs_w_m.child_frame_id = "world";
+    broadcaster.sendTransform(tfs_w_m);
+}
 
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "vins_estimator");
     ros::NodeHandle n("~");
     ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Info);
-
+    
     if(argc != 2)
     {
         printf("please intput: rosrun vins vins_node [config file] \n"
@@ -264,7 +303,7 @@ int main(int argc, char **argv)
     ros::Subscriber sub_restart = n.subscribe("/vins_restart", 100, restart_callback);
     ros::Subscriber sub_imu_switch = n.subscribe("/vins_imu_switch", 100, imu_switch_callback);
     ros::Subscriber sub_cam_switch = n.subscribe("/vins_cam_switch", 100, cam_switch_callback);
-
+    ros::WallTimer tf_timer = n.createWallTimer(ros::WallDuration(0.05), tf_timer_callback);
     std::thread sync_thread{sync_process};
     ros::spin();
 

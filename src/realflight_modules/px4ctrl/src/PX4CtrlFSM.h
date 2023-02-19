@@ -41,7 +41,7 @@ public:
 	Command_Data_t cmd_data;
 	Battery_Data_t bat_data;
 	Takeoff_Land_Data_t takeoff_land_data;
-	// 先换一下用来测试
+	// 控制器，可以选择线性pid或者se3几何控制
 	Controller* controller;
 	//NeuControl controller_2;
 	//LinearControl controller_1;
@@ -90,7 +90,7 @@ public:
 		collector.outfile << "\"[" << vel(0) << "," << vel(1) << "," << vel(2) << "]\",";
 		collector.outfile << "\"[" << q.w() << "," << q.x() << "," << q.y() << "," << q.z() << "]\",";
 		collector.outfile << "\"[" << pwm(0) << "," << pwm(1) << "," << pwm(2) <<  "," << pwm(3) << "]\",";
-		collector.outfile  << u.thrust << std::endl;
+		collector.outfile  << u.thrust << "," << controller->thr2acc_ << std::endl;
 	}
 private:
 	State_t state; // Should only be changed in PX4CtrlFSM::process() function!

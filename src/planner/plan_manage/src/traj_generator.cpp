@@ -128,7 +128,6 @@ void posCallback(const nav_msgs::Odometry::ConstPtr &msg){
     get_initialpos = true;
     //ROS_INFO("x = %lf, y = %lf, z = %lf", initial_pos(0), initial_pos(1), initial_pos(2));
   }
- 
 }
 void circle_generate(){
   int sample_time = traj_duration_ / T;

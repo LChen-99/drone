@@ -315,7 +315,7 @@ void PX4CtrlFSM::process()
 	if (state == AUTO_HOVER || state == CMD_CTRL)
 	{
 		// controller.estimateThrustModel(imu_data.a, bat_data.volt, param);
-		if(!start_collecting_){
+		if(!start_collecting_ && !controller->param_.thr_map.accurate_thrust_model){
 			controller->estimateThrustModel(imu_data.a, param);
 		}
 	}

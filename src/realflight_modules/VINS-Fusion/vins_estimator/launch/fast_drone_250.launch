@@ -3,4 +3,13 @@
 
 	<!-- <node name="loop_fusion" pkg="loop_fusion"  type="loop_fusion_node" args="$(find vins)/../config/fast_drone_250.yaml" output="screen"/> -->
 
+
+<!-- 
+	<param name="robot_description"
+	textfile="$(find vins)/../config/drone.urdf"/>
+	
+	<node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher"/>
+	 -->
+	<!-- <node name="rviz" pkg="vins" type="rviz" respawn="false" output="screen"/> -->
 </launch> 
+

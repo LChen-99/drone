@@ -197,7 +197,7 @@ void cmdCallback(const ros::TimerEvent &e)
     yaw_yawdot.second = 0;
 
     pos_f = pos;
-    return;
+    // return;
   }
   else
   {

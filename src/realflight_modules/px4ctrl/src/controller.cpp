@@ -207,11 +207,9 @@ Controller::estimateThrustModel(
     P_ = (1 - K * thr) * P_ / rho2_;
     if(param.thr_map.print_val){
       ROS_INFO("thr2acc = %6.3f", thr2acc_);
+      ROS_INFO("hover_percentage = %6.3f", param_.gra / thr2acc_);
       //printf("%6.3f,%6.3f,%6.3f,%6.3f\n", thr2acc_, gamma, K, P_);
     }
-    //printf("%6.3f,%6.3f,%6.3f,%6.3f\n", thr2acc_, gamma, K, P_);
-    //fflush(stdout);
-
     // debug_msg_.thr2acc = thr2acc_;
     return true;
   }

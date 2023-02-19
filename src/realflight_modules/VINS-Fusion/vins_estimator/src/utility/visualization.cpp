@@ -256,7 +256,7 @@ void pubKeyPoses(const Estimator &estimator, const std_msgs::Header &header)
 void pubCameraPose(const Estimator &estimator, const std_msgs::Header &header)
 {
     int idx2 = WINDOW_SIZE - 1;
-
+    static tf2_ros::TransformBroadcaster broadcaster;
     if (estimator.solver_flag == Estimator::SolverFlag::NON_LINEAR)
     {
         int i = idx2;
@@ -275,6 +275,25 @@ void pubCameraPose(const Estimator &estimator, const std_msgs::Header &header)
         odometry.pose.pose.orientation.w = R.w();
 
         pub_camera_pose.publish(odometry);
+        geometry_msgs::TransformStamped tfs;
+        tfs.header.frame_id = "world";
+        tfs.header.stamp = ros::Time::now();
+
+        //  |----坐标系 ID
+        tfs.child_frame_id = "vins_fusion/camera_pose";
+
+        //  |----坐标系相对信息设置
+        tfs.transform.translation.x = P.x();
+        tfs.transform.translation.y = P.y();
+        tfs.transform.translation.z = P.z();// 二维实现，pose 中没有z，z 是 0
+        //  |--------- 四元数设置
+        
+        tfs.transform.rotation.x = R.x();
+        tfs.transform.rotation.y = R.y();
+        tfs.transform.rotation.z = R.z();
+        tfs.transform.rotation.w = R.w();
+        broadcaster.sendTransform(tfs);
+
 
         cameraposevisual.reset();
         cameraposevisual.add_pose(P, R);

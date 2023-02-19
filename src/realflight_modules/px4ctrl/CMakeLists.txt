@@ -17,7 +17,9 @@ find_package(catkin REQUIRED COMPONENTS
   uav_utils
   mavros
 )
-
+set(Torch_DIR /home/luochen/library/libtorch/share/cmake/Torch)
+find_package(Torch REQUIRED)
+MESSAGE("TORCH_LIBRARIES = " ${TORCH_LIBRARIES})
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 find_package(Eigen3 REQUIRED) 
 
@@ -38,14 +40,23 @@ add_executable(px4ctrl_node
   src/controller.cpp
   src/neucontroller.cpp
   src/input.cpp
+  src/torch_model.cpp
+)
+add_executable(test_torch 
+  src/test.cpp
+  src/torch_model.cpp
 )
 
 add_dependencies(px4ctrl_node quadrotor_msgs)
 
 target_link_libraries(px4ctrl_node
   ${catkin_LIBRARIES}
+  ${TORCH_LIBRARIES}
 )
-
+target_link_libraries(test_torch
+  ${catkin_LIBRARIES}
+  ${TORCH_LIBRARIES}
+)
 catkin_install_python(PROGRAMS thrust_calibrate_scrips/thrust_calibrate.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )

@@ -8,7 +8,7 @@
 #include <mavros_msgs/AttitudeTarget.h>
 #include <quadrotor_msgs/Px4ctrlDebug.h>
 #include <queue>
-
+#include "torch_model.h"
 #include "input.h"
 #include <Eigen/Dense>
 
@@ -136,10 +136,28 @@ public:
       const Odom_Data_t &odom,
       const Imu_Data_t &imu, 
       Controller_Output_t &u);
-
+ 
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 private:
+	
+};
 
+
+class Neural_Fly_Control : public Controller
+{
+public:
+  Neural_Fly_Control(Parameter_t& param) : Controller(param){
+	model_ = new NetworkModel(param.model_path);
+  }
+  quadrotor_msgs::Px4ctrlDebug calculateControl(const Desired_State_t &des,
+      const Odom_Data_t &odom,
+      const Imu_Data_t &imu, 
+      Controller_Output_t &u);
+ 
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+	//TODO:自适应率
+private:
+	NetworkModel* model_;
 };
 #endif

@@ -1,0 +1,11 @@
+<?xml version="1.0"?> 
+	<robot name="drone"> 
+	<!-- Base Link --> 
+	<link name="base_link"> 
+        <visual> 
+            <geometry> 
+                <box size="0.1 0.2 2"/> 
+            </geometry> 
+        </visual> 
+	</link> 
+</robot>

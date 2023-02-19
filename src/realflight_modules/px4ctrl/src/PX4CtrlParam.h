@@ -6,6 +6,7 @@
 class Parameter_t
 {
 public:
+	std::string model_path;
 	std::string csv_filename;
 	std::string prefix;
 	struct Gain

@@ -6,7 +6,7 @@ Parameter_t::Parameter_t()
 
 void Parameter_t::config_from_ros_handle(const ros::NodeHandle &nh)
 {
-	
+	read_essential_param(nh, "model_path", model_path);
 	read_essential_param(nh, "prefix", prefix);
 	read_essential_param(nh, "csv_filename", csv_filename);
 	read_essential_param(nh, "gain/Kp0", gain.Kp0);
