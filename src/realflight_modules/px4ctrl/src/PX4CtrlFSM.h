@@ -90,7 +90,7 @@ public:
 		collector.outfile << "\"[" << vel(0) << "," << vel(1) << "," << vel(2) << "]\",";
 		collector.outfile << "\"[" << q.w() << "," << q.x() << "," << q.y() << "," << q.z() << "]\",";
 		collector.outfile << "\"[" << pwm(0) << "," << pwm(1) << "," << pwm(2) <<  "," << pwm(3) << "]\",";
-		collector.outfile  << u.thrust << "," << controller->thr2acc_ << std::endl;
+		collector.outfile  << u.thrust << "," << controller->thr2acc_  << "," << bat_data.volt << "," << bat_data.percentage << std::endl;
 	}
 private:
 	State_t state; // Should only be changed in PX4CtrlFSM::process() function!
