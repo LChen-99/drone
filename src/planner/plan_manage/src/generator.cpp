@@ -39,8 +39,10 @@ Traj TrajGenerator::Generator(const MatrixXd& waypoints){
 }
 
 void TrajGenerator::RandomGenerator(){
-    Eigen::Matrix3d waypoints = Eigen::Matrix3d::Random() * 0.4;
-
+    Eigen::Matrix3d waypoints = Eigen::Matrix3d::Random() * 2;
+    waypoints(2, 0) = 1;
+    waypoints(2, 1) = 1.5;
+    waypoints(2, 2) = 1;
     Traj traj_ = Generator(waypoints);
     traj_pos_ = traj_.pos;
     traj_vel_ = traj_.vel;

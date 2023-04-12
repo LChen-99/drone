@@ -6,8 +6,11 @@
 #include "visualization_msgs/Marker.h"
 #include <ros/ros.h>
 #include <plan_manage/generator.h>
+#include <nav_msgs/Path.h>
+// #include <nav_msgs/Odometry.h>
 #include <math.h>
 ros::Publisher pos_cmd_pub;
+ros::Publisher pub_des_path;
 ros::Subscriber initial_pos_sub;
 quadrotor_msgs::PositionCommand cmd;
 double pos_gain[3] = {0, 0, 0};
@@ -17,7 +20,7 @@ using ego_planner::UniformBspline;
 using namespace std;
 bool receive_traj_ = true;
 vector<UniformBspline> traj_;
-double traj_duration_ = 10;
+double traj_duration_ = 5;
 ros::Time start_time_;
 int traj_id_;
 int times = 0;
@@ -26,6 +29,8 @@ double T = 0.01;
 double last_yaw_, last_yaw_dot_;
 double time_forward_;
 vector<Eigen::Vector3d> traj_pos, traj_vel, traj_acc;
+nav_msgs::Path des_path;
+Eigen::Quaterniond initial_q;
 bool get_initialpos = false;
 Eigen::Vector3d initial_pos;
 double initial_yaw;
@@ -61,6 +66,9 @@ void cmdCallback(const ros::TimerEvent &e)
   }
   else if (times >= points_size)
   {
+    // times = 0;
+    // return;
+
     /* hover when finish traj_ */
     pos = generator.traj_pos_[points_size - 1];
     vel.setZero();
@@ -96,13 +104,29 @@ void cmdCallback(const ros::TimerEvent &e)
   cmd.acceleration.z = acc(2);
 
   cmd.yaw = initial_yaw;
-  cmd.yaw_dot = yaw_yawdot.second;
+  cmd.yaw_dot = 0;
 
+  geometry_msgs::PoseStamped despose_stamped;
+  despose_stamped.header = cmd.header;
+  despose_stamped.header.frame_id = "world";
+
+  // despose_stamped.pose.orientation.x = realq.x();
+  // despose_stamped.pose.orientation.y = realq.y();
+  // despose_stamped.pose.orientation.z = realq.z();
+  // despose_stamped.pose.orientation.w = realq.w();
+  despose_stamped.pose.position.x = pos(0) + initial_pos(0);
+  despose_stamped.pose.position.y = pos(1) + initial_pos(1);
+  despose_stamped.pose.position.z = pos(2) + initial_pos(2);
+  des_path.header = cmd.header;
+  des_path.header.frame_id = "world";
+  des_path.poses.push_back(despose_stamped);
+  pub_des_path.publish(des_path);
   last_yaw_ = cmd.yaw;
   //ROS_INFO("initial_pos = %lf, initial_pos = %lf, initial_pos = %lf", initial_pos(0), initial_pos(1), initial_pos(2));
   //ROS_INFO("des_x = %lf, des_y = %lf, des_z = %lf", pos(0), pos(1), pos(2));
   if(get_initialpos){
     times++;
+    if(times == points_size) times = 0;
     pos_cmd_pub.publish(cmd);
   }
   
@@ -123,7 +147,7 @@ void posCallback(const nav_msgs::Odometry::ConstPtr &msg){
     initial_pos(0) = msg->pose.pose.position.x;
     initial_pos(1) = msg->pose.pose.position.y;
     initial_pos(2) = msg->pose.pose.position.z;
-    
+    initial_q = q;
     initial_yaw = fromQuaternion2yaw(q);
     get_initialpos = true;
     //ROS_INFO("x = %lf, y = %lf, z = %lf", initial_pos(0), initial_pos(1), initial_pos(2));
@@ -131,19 +155,20 @@ void posCallback(const nav_msgs::Odometry::ConstPtr &msg){
 }
 void circle_generate(){
   int sample_time = traj_duration_ / T;
-  double radius = 0.5;
+  double radius = 1;
   
-  traj_pos = vector<Eigen::Vector3d>(sample_time, Eigen::Vector3d::Zero());
-  traj_vel = vector<Eigen::Vector3d>(sample_time, Eigen::Vector3d::Zero());
-  traj_acc = vector<Eigen::Vector3d>(sample_time, Eigen::Vector3d::Zero());
+  generator.traj_pos_ = vector<Eigen::Vector3d>(sample_time, Eigen::Vector3d::Zero());
+  generator.traj_vel_ = vector<Eigen::Vector3d>(sample_time, Eigen::Vector3d::Zero());
+  generator.traj_acc_ = vector<Eigen::Vector3d>(sample_time, Eigen::Vector3d::Zero());
 
   for(int i = 0; i < sample_time; i++){
-    Eigen::Vector3d p(radius * sin((2 * M_PI / sample_time) * i), radius * cos((2 * M_PI / sample_time) * i) - radius, 0);
-    Eigen::Vector3d v(radius * cos((2 * M_PI / sample_time) * i), - radius * sin((2 * M_PI / sample_time) * i), 0);
-    Eigen::Vector3d a(-radius * sin((2 * M_PI / sample_time) * i), - radius * cos((2 * M_PI / sample_time) * i), 0);
-    traj_pos[i] = p;
-    traj_vel[i] = v;
-    traj_acc[i] = a;
+    Eigen::Vector3d p(radius * cos((2 * M_PI / sample_time) * i + M_PI) + radius, radius * sin((2 * M_PI / sample_time) * i + M_PI), 0);
+    Eigen::Vector3d v(- radius * 2 * M_PI / traj_duration_ * sin((2 * M_PI / sample_time) * i + M_PI), radius * 2 * M_PI / traj_duration_  * cos((2 * M_PI / sample_time) * i + M_PI),  0);
+    // Eigen::Vector3d a = Vector3d::Zero();
+    Eigen::Vector3d a( - radius * pow(2 * M_PI / traj_duration_ , 2)* cos((2 * M_PI / sample_time) * i + M_PI), -radius * pow(2 * M_PI / traj_duration_ , 2) * sin((2 * M_PI / sample_time) * i + M_PI), 0);
+    generator.traj_pos_[i] = p;
+    generator.traj_vel_[i] = v;
+    generator.traj_acc_[i] = a;
   }
   
   
@@ -156,14 +181,15 @@ int main(int argc, char **argv)
   
   initial_pos_sub = nh.subscribe<nav_msgs::Odometry>("/vins_fusion/imu_propagate", 100, posCallback);
   pos_cmd_pub = nh.advertise<quadrotor_msgs::PositionCommand>("/position_cmd", 50);
+  pub_des_path = nh.advertise<nav_msgs::Path>("des_path", 1000);
   ros::Duration(0.5).sleep();
   // Matrix<double, 3, 3> waypoints;
   // waypoints << 0, 0, 0,\
   //              1, 0, 1,\
   //              2, 1, 2;
   // generator.Generator(waypoints.transpose());
-  generator.RandomGenerator();
-  
+  // generator.RandomGenerator();
+  circle_generate();
   ros::Timer cmd_timer = nh.createTimer(ros::Duration(T), cmdCallback);
 
   /* control parameter */

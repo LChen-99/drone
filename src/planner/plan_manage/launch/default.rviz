@@ -34,7 +34,7 @@ Panels:
   - Class: rviz/Time
     Name: Time
     SyncMode: 0
-    SyncSource: Image
+    SyncSource: map inflate
 Preferences:
   PromptSaveOnExit: true
 Toolbars:
@@ -94,7 +94,7 @@ Visualization Manager:
               Marker Topic: /drone_0_ego_planner_node/optimal_list
               Name: optimal_traj
               Namespaces:
-                "": true
+                {}
               Queue Size: 100
               Value: true
             - Class: rviz/Marker
@@ -110,7 +110,7 @@ Visualization Manager:
               Marker Topic: /drone_0_ego_planner_node/init_list
               Name: InitTraj
               Namespaces:
-                "": true
+                {}
               Queue Size: 100
               Value: true
             - Alpha: 1
@@ -144,8 +144,8 @@ Visualization Manager:
             - Alpha: 1
               Autocompute Intensity Bounds: true
               Autocompute Value Bounds:
-                Max Value: 1.2649999856948853
-                Min Value: 0.5149999856948853
+                Max Value: -9999
+                Min Value: 9999
                 Value: true
               Axis: Z
               Channel Name: intensity
@@ -353,7 +353,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 8.485965728759766
+      Distance: 18.759767532348633
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -369,9 +369,9 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.5597986578941345
+      Pitch: 0.3097988963127136
       Target Frame: <Fixed Frame>
-      Yaw: 5.106603622436523
+      Yaw: 4.6665940284729
     Saved:
       - Class: rviz/FPS
         Enable Stereo Rendering:
@@ -443,6 +443,6 @@ Window Geometry:
     collapsed: false
   Width: 992
   X: 368
-  Y: 124
+  Y: 87
   depth:
     collapsed: false

@@ -13,7 +13,7 @@ using namespace uav_utils;
 PX4CtrlFSM::PX4CtrlFSM(Parameter_t &param_) : param(param_) /*, thrust_curve(thrust_curve_)*/
 {
 	state = MANUAL_CTRL;
-	controller = new SE3Controller(param_);
+	controller = new Neural_Fly_Control(param_);
 	start_collecting_ = false;
 	hover_pose.setZero();
 }
@@ -327,7 +327,7 @@ void PX4CtrlFSM::process()
 	}
 	else
 	{
-		debug_msg = controller->calculateControl(des, odom_data, imu_data, u);
+		debug_msg = controller->calculateControl(des, odom_data, imu_data, pwm_data, u);
 		debug_msg.header.stamp = now_time;
 		debug_pub.publish(debug_msg);
 	}

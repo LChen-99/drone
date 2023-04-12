@@ -11,7 +11,7 @@
 #include "torch_model.h"
 #include "input.h"
 #include <Eigen/Dense>
-
+#include "Kalman_filter.h"
 
 
 struct Desired_State_t
@@ -59,6 +59,7 @@ public:
   quadrotor_msgs::Px4ctrlDebug calculateControl(const Desired_State_t &des,
       const Odom_Data_t &odom,
       const Imu_Data_t &imu, 
+      const Pwm_Data_t &pwm,
       Controller_Output_t &u);
   bool estimateThrustModel(const Eigen::Vector3d &est_v,
       const Parameter_t &param);
@@ -90,6 +91,7 @@ public:
 	virtual quadrotor_msgs::Px4ctrlDebug calculateControl(const Desired_State_t &des,
       const Odom_Data_t &odom,
       const Imu_Data_t &imu, 
+      const Pwm_Data_t &pwm,
       Controller_Output_t &u);
 	bool estimateThrustModel(const Eigen::Vector3d &est_v,
       const Parameter_t &param);
@@ -121,6 +123,7 @@ public:
   quadrotor_msgs::Px4ctrlDebug calculateControl(const Desired_State_t &des,
       const Odom_Data_t &odom,
       const Imu_Data_t &imu, 
+      const Pwm_Data_t &pwm,
       Controller_Output_t &u);
 
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -135,6 +138,7 @@ public:
   quadrotor_msgs::Px4ctrlDebug calculateControl(const Desired_State_t &des,
       const Odom_Data_t &odom,
       const Imu_Data_t &imu, 
+      const Pwm_Data_t &pwm,
       Controller_Output_t &u);
  
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -148,16 +152,21 @@ class Neural_Fly_Control : public Controller
 {
 public:
   Neural_Fly_Control(Parameter_t& param) : Controller(param){
-	model_ = new NetworkModel(param.model_path);
+	  model_ = new NetworkModel(param.model_path);
+    Kalman = new KalmanAdaptive(0.01);
   }
   quadrotor_msgs::Px4ctrlDebug calculateControl(const Desired_State_t &des,
       const Odom_Data_t &odom,
       const Imu_Data_t &imu, 
+      const Pwm_Data_t &pwm,
       Controller_Output_t &u);
  
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 	//TODO:自适应率
+
+  
 private:
+  KalmanAdaptive* Kalman;
 	NetworkModel* model_;
 };
 #endif

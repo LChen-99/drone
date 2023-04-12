@@ -24,6 +24,7 @@ quadrotor_msgs::Px4ctrlDebug
 Controller::calculateControl(const Desired_State_t &des,
     const Odom_Data_t &odom,
     const Imu_Data_t &imu, 
+    const Pwm_Data_t &pwm,
     Controller_Output_t &u)
 {
   /* WRITE YOUR CODE HERE */
@@ -92,20 +93,27 @@ quadrotor_msgs::Px4ctrlDebug
 LinearController::calculateControl(const Desired_State_t &des,
     const Odom_Data_t &odom,
     const Imu_Data_t &imu, 
+    const Pwm_Data_t &pwm,
     Controller_Output_t &u)
 {
   /* WRITE YOUR CODE HERE */
       //compute disired acceleration
+      Odom_Data_t cur = odom;
+      if((des.p - odom.p).norm() > 3){
+        ROS_WARN("des.p - odom.p  = %4lf is large!", (des.p - odom.p).norm());
+        cur.v = des.v;
+        cur.p = des.p;
+      }
       Eigen::Vector3d des_acc(0.0, 0.0, 0.0);
       Eigen::Vector3d Kp,Kv;
       Kp << param_.gain.Kp0, param_.gain.Kp1, param_.gain.Kp2;
       Kv << param_.gain.Kv0, param_.gain.Kv1, param_.gain.Kv2;
-      des_acc = des.a + Kv.asDiagonal() * (des.v - odom.v) + Kp.asDiagonal() * (des.p - odom.p);
+      des_acc = des.a + Kv.asDiagonal() * (des.v - cur.v) + Kp.asDiagonal() * (des.p - cur.p);
       des_acc += Eigen::Vector3d(0,0,param_.gra);
 
       u.thrust = computeDesiredCollectiveThrustSignal(des_acc);
       double roll,pitch,yaw,yaw_imu;
-      double yaw_odom = fromQuaternion2yaw(odom.q);
+      double yaw_odom = fromQuaternion2yaw(cur.q);
       double sin = std::sin(yaw_odom);
       double cos = std::cos(yaw_odom);
       roll = ((0) * sin - des_acc(1) * cos )/ param_.gra;
@@ -120,7 +128,7 @@ LinearController::calculateControl(const Desired_State_t &des,
         * Eigen::AngleAxisd(roll,Eigen::Vector3d::UnitX());
       // /vins_fusion/imu_propagate 和 /mavros/imu/data 的坐标系定义不同，
       //  Rw1_imu * Rimu_w2 * Rw2_des = Rw1_des
-      u.q = imu.q * odom.q.inverse() * q;
+      u.q = imu.q * cur.q.inverse() * q;
 
 
   /* WRITE YOUR CODE HERE */
@@ -227,17 +235,24 @@ quadrotor_msgs::Px4ctrlDebug
 SE3Controller::calculateControl(const Desired_State_t &des,
     const Odom_Data_t &odom,
     const Imu_Data_t &imu, 
+    const Pwm_Data_t &pwm,
     Controller_Output_t &u)
 {
   /* WRITE YOUR CODE HERE */
       //compute disired acceleration
+      Odom_Data_t cur = odom;
+      if((des.p - odom.p).norm() > 2){
+        ROS_WARN("des.p - odom.p  = %4lf is too large!", (des.p - odom.p).norm());
+        cur.v = des.v;
+        cur.p = des.p;
+      }
       Eigen::Vector3d des_acc(0.0, 0.0, 0.0);
       Eigen::Vector3d Kp,Kv;
       Kp << param_.gain.Kp0, param_.gain.Kp1, param_.gain.Kp2;
       Kv << param_.gain.Kv0, param_.gain.Kv1, param_.gain.Kv2;
-      des_acc = des.a + Kv.asDiagonal() * (des.v - odom.v) + Kp.asDiagonal() * (des.p - odom.p);
+      des_acc = des.a + Kv.asDiagonal() * (des.v - cur.v) + Kp.asDiagonal() * (des.p - cur.p);
       des_acc += Eigen::Vector3d(0,0,param_.gra);
-      Eigen::Matrix3d rotation_q = odom.q.toRotationMatrix();
+      Eigen::Matrix3d rotation_q = cur.q.toRotationMatrix();
       Eigen::Matrix3d rotation_des = Eigen::Matrix3d::Zero();
       Eigen::Vector3d rotation_z = rotation_q.col(2);
       //cout << des_acc << endl;
@@ -271,7 +286,7 @@ SE3Controller::calculateControl(const Desired_State_t &des,
       //   * Eigen::AngleAxisd(roll,Eigen::Vector3d::UnitX());
       // /vins_fusion/imu_propagate 和 /mavros/imu/data 的坐标系定义不同，
       //  Rw1_imu * Rimu_w2 * Rw2_des = Rw1_des
-      u.q = imu.q * odom.q.inverse() * q_des;
+      u.q = imu.q * cur.q.inverse() * q_des;
 
 
   /* WRITE YOUR CODE HERE */
@@ -309,3 +324,94 @@ SE3Controller::calculateControl(const Desired_State_t &des,
 
 
 
+quadrotor_msgs::Px4ctrlDebug
+Neural_Fly_Control::calculateControl(const Desired_State_t &des,
+    const Odom_Data_t &odom,
+    const Imu_Data_t &imu, 
+    const Pwm_Data_t &pwm,
+    Controller_Output_t &u)
+{
+  /* WRITE YOUR CODE HERE */
+      //compute disired acceleration
+      Matrix<double, 11, 1> feature;
+      feature.block(0, 0, 3, 1) = odom.v;
+      feature(3, 0) = odom.q.x();
+      feature(4, 0) = odom.q.y();
+      feature(5, 0) = odom.q.z();
+      feature(6, 0) = odom.q.w();
+      feature(7, 0) = pwm.pwm[0];
+      feature(8, 0) = pwm.pwm[1];
+      feature(9, 0) = pwm.pwm[2];
+      feature(10, 0) = pwm.pwm[3];
+      cout << "feature = " << feature << endl;
+      Vector3d fai_output = model_->forward(feature);
+      Vector3d f_measurement;
+      Vector3d s;
+      // Kalman->update(f_measurement, s, f_force)
+	    cout << "fai_output = " <<  fai_output << endl;
+      Odom_Data_t cur = odom;
+      if((des.p - odom.p).norm() > 2){
+        ROS_WARN("des.p - odom.p  = %4lf is too large!", (des.p - odom.p).norm());
+        cur.v = des.v;
+        cur.p = des.p;
+      }
+      Eigen::Vector3d des_acc(0.0, 0.0, 0.0);
+      Eigen::Vector3d Kp,Kv;
+      Kp << param_.gain.Kp0, param_.gain.Kp1, param_.gain.Kp2;
+      Kv << param_.gain.Kv0, param_.gain.Kv1, param_.gain.Kv2;
+      Vector3d a_w = odom.q * imu.a;
+      cout << "a_w = " << a_w << endl;
+      des_acc = des.a + Kv.asDiagonal() * (des.v - cur.v) + Kp.asDiagonal() * (des.p - cur.p);
+      des_acc += Eigen::Vector3d(0,0,param_.gra);
+      Eigen::Matrix3d rotation_q = cur.q.toRotationMatrix();
+      Eigen::Matrix3d rotation_des = Eigen::Matrix3d::Zero();
+      Eigen::Vector3d rotation_z = rotation_q.col(2);
+      //cout << des_acc << endl;
+      double acc_z = des_acc.dot(rotation_z);
+      Eigen::Vector3d acc(0, 0, acc_z);
+      u.thrust = computeDesiredCollectiveThrustSignal(acc);
+      //double roll,pitch,yaw,yaw_imu;
+      Eigen::Vector3d zb_des, xc_des, yb_des, xb_des;
+      zb_des = des_acc / des_acc.norm();
+      xc_des = {cos(des.yaw), sin(des.yaw), 0};
+      yb_des = zb_des.cross(xc_des) / zb_des.cross(xc_des).norm();
+      xb_des = yb_des.cross(zb_des);
+      xb_des = xb_des / xb_des.norm();
+      rotation_des.col(0) = xb_des;
+      rotation_des.col(1) = yb_des;
+      rotation_des.col(2) = zb_des;
+      Eigen::Quaterniond q_des(rotation_des);
+
+      u.q = imu.q * cur.q.inverse() * q_des;
+
+
+  /* WRITE YOUR CODE HERE */
+
+  //used for debug
+  // debug_msg_.des_p_x = des.p(0);
+  // debug_msg_.des_p_y = des.p(1);
+  // debug_msg_.des_p_z = des.p(2);
+  
+  debug_msg_.des_v_x = des.v(0);
+  debug_msg_.des_v_y = des.v(1);
+  debug_msg_.des_v_z = des.v(2);
+  
+  debug_msg_.des_a_x = des_acc(0);
+  debug_msg_.des_a_y = des_acc(1);
+  debug_msg_.des_a_z = des_acc(2);
+  
+  debug_msg_.des_q_x = u.q.x();
+  debug_msg_.des_q_y = u.q.y();
+  debug_msg_.des_q_z = u.q.z();
+  debug_msg_.des_q_w = u.q.w();
+  
+  debug_msg_.des_thr = u.thrust;
+  
+  // Used for thrust-accel mapping estimation
+  timed_thrust_.push(std::pair<ros::Time, double>(ros::Time::now(), u.thrust));
+  while (timed_thrust_.size() > 100)
+  {
+    timed_thrust_.pop();
+  }
+  return debug_msg_;
+}
