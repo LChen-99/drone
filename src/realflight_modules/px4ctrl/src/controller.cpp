@@ -339,10 +339,15 @@ Neural_Fly_Control::calculateControl(const Desired_State_t &des,
       feature(4, 0) = odom.q.y();
       feature(5, 0) = odom.q.z();
       feature(6, 0) = odom.q.w();
-      feature(7, 0) = pwm.pwm[0];
-      feature(8, 0) = pwm.pwm[1];
-      feature(9, 0) = pwm.pwm[2];
-      feature(10, 0) = pwm.pwm[3];
+      double hover_ = 910.0 / (1564.0 * 1000.0);
+      cout << "pwm.pwm[0] = " << pwm.pwm[0] << endl;
+      cout << "pwm.pwm[1] = " << pwm.pwm[1] << endl;
+      cout << "pwm.pwm[2] = " << pwm.pwm[2] << endl;
+      cout << "pwm.pwm[3] = " << pwm.pwm[3] << endl;
+      feature(7, 0) = pwm.pwm[0] * hover_;
+      feature(8, 0) = pwm.pwm[1] * hover_;
+      feature(9, 0) = pwm.pwm[2] * hover_;
+      feature(10, 0) = pwm.pwm[3] * hover_;
       cout << "feature = " << feature << endl;
       Vector3d fai_output = model_->forward(feature);
       Vector3d f_measurement;
@@ -360,7 +365,7 @@ Neural_Fly_Control::calculateControl(const Desired_State_t &des,
       Kp << param_.gain.Kp0, param_.gain.Kp1, param_.gain.Kp2;
       Kv << param_.gain.Kv0, param_.gain.Kv1, param_.gain.Kv2;
       Vector3d a_w = odom.q * imu.a;
-      cout << "a_w = " << a_w << endl;
+      cout << "a_w = " << a_w - Eigen::Vector3d(0,0,param_.gra) << endl;
       des_acc = des.a + Kv.asDiagonal() * (des.v - cur.v) + Kp.asDiagonal() * (des.p - cur.p);
       des_acc += Eigen::Vector3d(0,0,param_.gra);
       Eigen::Matrix3d rotation_q = cur.q.toRotationMatrix();

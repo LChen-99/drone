@@ -123,8 +123,9 @@ Pwm_Data_t::Pwm_Data_t(){
 void Pwm_Data_t::feed(mavros_msgs::RCOutConstPtr pMsg){
     ros::Time now = ros::Time::now();
     if(pwm.size() != pMsg->channels.size()){
-        pwm = std::vector<double>(pMsg->channels.size(), 0);
+        pwm = std::vector<double>(4, 0);
     }
+    
     msg = *pMsg;
     rcv_stamp = now;
     pwm[0] = msg.channels[0];
