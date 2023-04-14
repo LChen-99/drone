@@ -93,6 +93,12 @@ public:
       const Imu_Data_t &imu, 
       const Pwm_Data_t &pwm,
       Controller_Output_t &u);
+  virtual void updateAdapt(const Desired_State_t &des,
+    const Odom_Data_t &odom,
+    const Imu_Data_t &imu, 
+    const Pwm_Data_t &pwm,
+    const Controller_Output_t &u){}
+    
 	bool estimateThrustModel(const Eigen::Vector3d &est_v,
       const Parameter_t &param);
 	void resetThrustMapping(void);
@@ -160,7 +166,11 @@ public:
       const Imu_Data_t &imu, 
       const Pwm_Data_t &pwm,
       Controller_Output_t &u);
- 
+  void updateAdapt(const Desired_State_t &des,
+    const Odom_Data_t &odom,
+    const Imu_Data_t &imu, 
+    const Pwm_Data_t &pwm,
+    const Controller_Output_t &u);
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 	//TODO:自适应率
 

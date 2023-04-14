@@ -318,6 +318,7 @@ void PX4CtrlFSM::process()
 		if(!start_collecting_ && !controller->param_.thr_map.accurate_thrust_model){
 			controller->estimateThrustModel(imu_data.a, param);
 		}
+		
 	}
 
 	// STEP3: solve and update new control commands
@@ -331,7 +332,12 @@ void PX4CtrlFSM::process()
 		debug_msg.header.stamp = now_time;
 		debug_pub.publish(debug_msg);
 	}
-
+	if (state != MANUAL_CTRL)
+	{
+		// controller.estimateThrustModel(imu_data.a, bat_data.volt, param);
+		controller->updateAdapt(des, odom_data, imu_data, pwm_data, u);
+		
+	}
 	// STEP4: publish control commands to mavros
 	if (param.use_bodyrate_ctrl)
 	{

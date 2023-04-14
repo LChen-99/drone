@@ -333,39 +333,23 @@ Neural_Fly_Control::calculateControl(const Desired_State_t &des,
 {
   /* WRITE YOUR CODE HERE */
       //compute disired acceleration
-      Matrix<double, 11, 1> feature;
-      feature.block(0, 0, 3, 1) = odom.v;
-      feature(3, 0) = odom.q.x();
-      feature(4, 0) = odom.q.y();
-      feature(5, 0) = odom.q.z();
-      feature(6, 0) = odom.q.w();
-      double hover_ = 910.0 / (1564.0 * 1000.0);
-      cout << "pwm.pwm[0] = " << pwm.pwm[0] << endl;
-      cout << "pwm.pwm[1] = " << pwm.pwm[1] << endl;
-      cout << "pwm.pwm[2] = " << pwm.pwm[2] << endl;
-      cout << "pwm.pwm[3] = " << pwm.pwm[3] << endl;
-      feature(7, 0) = pwm.pwm[0] * hover_;
-      feature(8, 0) = pwm.pwm[1] * hover_;
-      feature(9, 0) = pwm.pwm[2] * hover_;
-      feature(10, 0) = pwm.pwm[3] * hover_;
-      cout << "feature = " << feature << endl;
-      Vector3d fai_output = model_->forward(feature);
-      Vector3d f_measurement;
-      Vector3d s;
-      // Kalman->update(f_measurement, s, f_force)
-	    cout << "fai_output = " <<  fai_output << endl;
+      
+
+     
+	    // cout << "phi_output = " <<  phi_output << endl;
       Odom_Data_t cur = odom;
       if((des.p - odom.p).norm() > 2){
         ROS_WARN("des.p - odom.p  = %4lf is too large!", (des.p - odom.p).norm());
         cur.v = des.v;
         cur.p = des.p;
       }
+
+       
       Eigen::Vector3d des_acc(0.0, 0.0, 0.0);
       Eigen::Vector3d Kp,Kv;
       Kp << param_.gain.Kp0, param_.gain.Kp1, param_.gain.Kp2;
       Kv << param_.gain.Kv0, param_.gain.Kv1, param_.gain.Kv2;
-      Vector3d a_w = odom.q * imu.a;
-      cout << "a_w = " << a_w - Eigen::Vector3d(0,0,param_.gra) << endl;
+      
       des_acc = des.a + Kv.asDiagonal() * (des.v - cur.v) + Kp.asDiagonal() * (des.p - cur.p);
       des_acc += Eigen::Vector3d(0,0,param_.gra);
       Eigen::Matrix3d rotation_q = cur.q.toRotationMatrix();
@@ -419,4 +403,44 @@ Neural_Fly_Control::calculateControl(const Desired_State_t &des,
     timed_thrust_.pop();
   }
   return debug_msg_;
+}
+
+void Neural_Fly_Control::updateAdapt(const Desired_State_t &des,
+    const Odom_Data_t &odom,
+    const Imu_Data_t &imu, 
+    const Pwm_Data_t &pwm,
+    const Controller_Output_t &u){
+
+  Odom_Data_t cur = odom;    
+  Matrix<double, 11, 1> feature;
+  feature.block(0, 0, 3, 1) = odom.v;
+  feature(3, 0) = odom.q.x();
+  feature(4, 0) = odom.q.y();
+  feature(5, 0) = odom.q.z();
+  feature(6, 0) = odom.q.w();
+  double hover_ = 910.0 / (1564.0 * 1000.0);
+  // cout << "pwm.pwm[0] = " << pwm.pwm[0] << endl;
+  // cout << "pwm.pwm[1] = " << pwm.pwm[1] << endl;
+  // cout << "pwm.pwm[2] = " << pwm.pwm[2] << endl;
+  // cout << "pwm.pwm[3] = " << pwm.pwm[3] << endl;
+  feature(7, 0) = pwm.pwm[0] * hover_;
+  feature(8, 0) = pwm.pwm[1] * hover_;
+  feature(9, 0) = pwm.pwm[2] * hover_;
+  feature(10, 0) = pwm.pwm[3] * hover_;
+  // cout << "feature = " << feature << endl;
+  // cur.q --- R^w(vins)_imu 
+  // imu.q --- R^w(px4)_imu
+  Vector3d a_w = cur.q * imu.a - Eigen::Vector3d(0, 0, param_.gra);
+  Vector3d phi_output = model_->forward(feature);
+  Vector3d f_measurement = a_w * param_.mass;
+  Vector3d s = (des.v - cur.v) + (des.p - cur.p);
+  Kalman->update(f_measurement, s, phi_output);
+  auto a = Kalman->get_a();
+  // cout << "a = " << a << endl;
+  Vector3d f_;
+  f_(0) = phi_output.transpose() * a.block<3, 1>(0, 0);
+  f_(1) = phi_output.transpose() * a.block<3, 1>(3, 0);
+  f_(2) = phi_output.transpose() * a.block<3, 1>(6, 0);
+  // cout << "f_measurement = " << f_measurement << endl;
+  // cout << "f = " << f_ << endl;
 }
