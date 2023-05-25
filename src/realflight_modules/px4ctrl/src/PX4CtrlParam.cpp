@@ -60,6 +60,9 @@ void Parameter_t::config_from_ros_handle(const ros::NodeHandle &nh)
 	read_essential_param(nh, "thrust_model/accurate_thrust_model", thr_map.accurate_thrust_model);
 	read_essential_param(nh, "thrust_model/hover_percentage", thr_map.hover_percentage);
 	
+	read_essential_param(nh, "disturbance_obs/constant", disturbance_obs.constant);
+	read_essential_param(nh, "disturbance_obs/use", disturbance_obs.use);
+
 
 	max_angle /= (180.0 / M_PI);
 

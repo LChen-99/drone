@@ -13,6 +13,7 @@
 #include "collector.h"
 #include "neucontroller.h"
 #include "input.h"
+#include "tic_toc.h"
 // #include "ThrustCurve.h"
 #include "controller.h"
 
@@ -80,7 +81,6 @@ public:
 	// server : start collecting
 	bool doCollectReq(std_srvs::Trigger::Request& req, std_srvs::Trigger::Response& resp);
 	void writeCurState (const Controller_Output_t u, const ros::Time& now_time){
-
 		Eigen::Vector3d pos(odom_data.p);
 		Eigen::Vector3d vel(odom_data.v);
 		Eigen::Quaterniond q(odom_data.q);
@@ -90,7 +90,10 @@ public:
 		collector.outfile << "\"[" << vel(0) << "," << vel(1) << "," << vel(2) << "]\",";
 		collector.outfile << "\"[" << q.w() << "," << q.x() << "," << q.y() << "," << q.z() << "]\",";
 		collector.outfile << "\"[" << pwm(0) << "," << pwm(1) << "," << pwm(2) <<  "," << pwm(3) << "]\",";
+		collector.outfile << "\"[" << controller->disturbance_obs(0) << "," << controller->disturbance_obs(1) << "," << controller->disturbance_obs(2) << "]\",";
+		collector.outfile << "\"[" << controller->disturbance_mea(0) << "," << controller->disturbance_mea(1) << "," << controller->disturbance_mea(2) << "]\",";
 		collector.outfile  << u.thrust << "," << controller->thr2acc_  << "," << bat_data.volt << "," << bat_data.percentage << std::endl;
+
 	}
 private:
 	State_t state; // Should only be changed in PX4CtrlFSM::process() function!

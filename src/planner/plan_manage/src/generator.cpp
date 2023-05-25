@@ -18,7 +18,7 @@ Traj TrajGenerator::Generator(const MatrixXd& waypoints){
     traj_time_.resize(n);
     traj_time_[0] = 0;
     for(int i = 1; i < n; i++){
-        traj_time_[i] = d0(i - 1);
+        traj_time_[i] = d0(i - 1) / 2.5;
     }
     std::vector<Eigen::MatrixXd> Polynomial_coefficients;
     Polynomial_coefficients.push_back(CalcuCoef(waypoints.row(0)));
@@ -39,10 +39,10 @@ Traj TrajGenerator::Generator(const MatrixXd& waypoints){
 }
 
 void TrajGenerator::RandomGenerator(){
-    Eigen::Matrix3d waypoints = Eigen::Matrix3d::Random() * 2;
-    waypoints(2, 0) = 1;
-    waypoints(2, 1) = 1.5;
-    waypoints(2, 2) = 1;
+    srand(unsigned(time(NULL)));
+    cout << "generator point randomly" << endl;
+    Eigen::Matrix3d waypoints = Eigen::Matrix3d::Random() * 3;
+    waypoints.block<3, 1>(0, 0) = last_pos;
     Traj traj_ = Generator(waypoints);
     traj_pos_ = traj_.pos;
     traj_vel_ = traj_.vel;
@@ -138,4 +138,24 @@ vector<Vector3d> TrajGenerator::PolyFunc(double t, std::vector<Eigen::MatrixXd>&
     pva.push_back(v);
     pva.push_back(a);
     return pva;
+}
+void TrajGenerator::circle_generate(double traj_duration_, double r){
+  int sample_time = traj_duration_ / T_;
+  double radius = r;
+  
+  traj_pos_ = vector<Eigen::Vector3d>(sample_time, Eigen::Vector3d::Zero());
+  traj_vel_ = vector<Eigen::Vector3d>(sample_time, Eigen::Vector3d::Zero());
+  traj_acc_ = vector<Eigen::Vector3d>(sample_time, Eigen::Vector3d::Zero());
+
+  for(int i = 0; i < sample_time; i++){
+    Eigen::Vector3d p(radius * cos((2 * M_PI / sample_time) * i + M_PI) + radius, radius * sin((2 * M_PI / sample_time) * i + M_PI), 0);
+    Eigen::Vector3d v(- radius * 2 * M_PI / traj_duration_ * sin((2 * M_PI / sample_time) * i + M_PI), radius * 2 * M_PI / traj_duration_  * cos((2 * M_PI / sample_time) * i + M_PI),  0);
+    // Eigen::Vector3d a = Vector3d::Zero();
+    Eigen::Vector3d a( - radius * pow(2 * M_PI / traj_duration_ , 2)* cos((2 * M_PI / sample_time) * i + M_PI), -radius * pow(2 * M_PI / traj_duration_ , 2) * sin((2 * M_PI / sample_time) * i + M_PI), 0);
+    traj_pos_[i] = p;
+    traj_vel_[i] = v;
+    traj_acc_[i] = a;
+  }
+  
+  
 }

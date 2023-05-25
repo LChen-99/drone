@@ -184,6 +184,7 @@ void PX4CtrlFSM::process()
 		{
 			set_hov_with_rc();
 			des = get_hover_des();
+			// ROS_INFO("hover_pose.x = %lf, hover_pose.y = %lf, hover_pose.z = %lf", des.p(0), des.p(1), des.p(2));
 			if ((rc_data.enter_command_mode) ||
 				(takeoff_land.delay_trigger.first && now_time > takeoff_land.delay_trigger.second))
 			{
@@ -315,7 +316,7 @@ void PX4CtrlFSM::process()
 	if (state == AUTO_HOVER || state == CMD_CTRL)
 	{
 		// controller.estimateThrustModel(imu_data.a, bat_data.volt, param);
-		if(!start_collecting_ && !controller->param_.thr_map.accurate_thrust_model){
+		if(!controller->param_.thr_map.accurate_thrust_model){
 			controller->estimateThrustModel(imu_data.a, param);
 		}
 		
@@ -332,29 +333,28 @@ void PX4CtrlFSM::process()
 		debug_msg.header.stamp = now_time;
 		debug_pub.publish(debug_msg);
 	}
-	if (state != MANUAL_CTRL)
+	if (state != MANUAL_CTRL && abs(odom_data.p(2) - takeoff_land.start_pose(2) > 0.05))
 	{
 		// controller.estimateThrustModel(imu_data.a, bat_data.volt, param);
-		controller->updateAdapt(des, odom_data, imu_data, pwm_data, u);
+		
+		controller->updateAdapt(now_time.toSec(), des, odom_data, imu_data, pwm_data, u.thrust);
 		
 	}
 	// STEP4: publish control commands to mavros
 	if (param.use_bodyrate_ctrl)
 	{
 		publish_bodyrate_ctrl(u, now_time);
-
-		
 	}
 	else
 	{
 		publish_attitude_ctrl(u, now_time);
-
-		
 	}
 	// record states
 	if(start_collecting_){
+		TicToc tic;
 		ROS_INFO("Strat collecting data");
 		this->writeCurState(u, now_time);
+		ROS_INFO("write cost: %lf", tic.toc());
 	}
 	
 	// STEP5: Detect if the drone has landed
@@ -490,7 +490,11 @@ Desired_State_t PX4CtrlFSM::get_takeoff_land_des(const double speed)
 
 void PX4CtrlFSM::set_hov_with_odom()
 {
-	hover_pose.head<3>() = odom_data.p;
+	// ROS_INFO("hover_pose.x = %lf, hover_pose.y = %lf, hover_pose.z = %lf", odom_data.p(0), odom_data.p(1), odom_data.p(2));
+	
+	hover_pose.head<2>() = takeoff_land.start_pose.head<2>();
+	hover_pose(2) = odom_data.p(2);
+	
 	hover_pose(3) = get_yaw_from_quaternion(odom_data.q);
 
 	last_set_hover_pose_time = ros::Time::now();

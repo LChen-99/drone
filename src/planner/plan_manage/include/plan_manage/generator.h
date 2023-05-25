@@ -20,10 +20,12 @@ public:
     MatrixXd GetMatrixLine(int piecewise_th, int order, double t);
     vector<Vector3d> PolyFunc(double t,  std::vector<Eigen::MatrixXd>& Polynomial_coefficients);
     void RandomGenerator();
+    void circle_generate(double traj_duration_, double r);
     vector<Vector3d> traj_pos_;
     vector<Vector3d> traj_vel_;
     vector<Vector3d> traj_acc_;
     vector<double> traj_time_;
+    Vector3d last_pos;
     double T_;
 };
 

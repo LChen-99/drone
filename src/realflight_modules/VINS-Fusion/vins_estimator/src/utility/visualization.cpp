@@ -1,4 +1,4 @@
-/*******************************************************
+/*******************************************************s
  * Copyright (C) 2019, Aerial Robotics Group, Hong Kong University of Science and Technology
  * 
  * This file is part of VINS.

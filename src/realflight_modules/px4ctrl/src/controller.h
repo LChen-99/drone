@@ -8,6 +8,7 @@
 #include <mavros_msgs/AttitudeTarget.h>
 #include <quadrotor_msgs/Px4ctrlDebug.h>
 #include <queue>
+#include "tic_toc.h"
 #include "torch_model.h"
 #include "input.h"
 #include <Eigen/Dense>
@@ -93,11 +94,11 @@ public:
       const Imu_Data_t &imu, 
       const Pwm_Data_t &pwm,
       Controller_Output_t &u);
-  virtual void updateAdapt(const Desired_State_t &des,
+  virtual void updateAdapt(double t, const Desired_State_t &des,
     const Odom_Data_t &odom,
     const Imu_Data_t &imu, 
     const Pwm_Data_t &pwm,
-    const Controller_Output_t &u){}
+    const double &u){}
     
 	bool estimateThrustModel(const Eigen::Vector3d &est_v,
       const Parameter_t &param);
@@ -118,6 +119,8 @@ public:
 
 	double computeDesiredCollectiveThrustSignal(const Eigen::Vector3d &des_acc);
 	double fromQuaternion2yaw(Eigen::Quaterniond q);
+  Vector3d disturbance_obs;
+  Vector3d disturbance_mea;
 private:
 };
 
@@ -160,22 +163,27 @@ public:
   Neural_Fly_Control(Parameter_t& param) : Controller(param){
 	  model_ = new NetworkModel(param.model_path);
     Kalman = new KalmanAdaptive(0.01);
+    prev_vel = Vector3d(0, 0, 0);
+    binit_ = false;
+    prev_t = -1;
   }
   quadrotor_msgs::Px4ctrlDebug calculateControl(const Desired_State_t &des,
       const Odom_Data_t &odom,
       const Imu_Data_t &imu, 
       const Pwm_Data_t &pwm,
       Controller_Output_t &u);
-  void updateAdapt(const Desired_State_t &des,
+  void updateAdapt(double t, const Desired_State_t &des,
     const Odom_Data_t &odom,
     const Imu_Data_t &imu, 
     const Pwm_Data_t &pwm,
-    const Controller_Output_t &u);
+    const double &u);
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 	//TODO:自适应率
-
+  bool binit_;
   
 private:
+  double prev_t;
+  Vector3d prev_vel;
   KalmanAdaptive* Kalman;
 	NetworkModel* model_;
 };

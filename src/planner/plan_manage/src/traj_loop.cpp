@@ -5,21 +5,21 @@
 #include "std_msgs/Empty.h"
 #include "visualization_msgs/Marker.h"
 #include <ros/ros.h>
+#include "plan_manage/collector.h"
 #include <plan_manage/generator.h>
 #include <nav_msgs/Path.h>
 // #include <nav_msgs/Odometry.h>
 #include <math.h>
 ros::Publisher pos_cmd_pub;
 ros::Publisher pub_des_path;
+ros::Publisher pub_groundtruth_path;
 ros::Subscriber initial_pos_sub;
 quadrotor_msgs::PositionCommand cmd;
 double pos_gain[3] = {0, 0, 0};
 double vel_gain[3] = {0, 0, 0};
 
-using ego_planner::UniformBspline;
 using namespace std;
 bool receive_traj_ = true;
-vector<UniformBspline> traj_;
 double traj_duration_ = 5;
 ros::Time start_time_;
 int traj_id_;
@@ -29,12 +29,16 @@ double T = 0.01;
 double last_yaw_, last_yaw_dot_;
 double time_forward_;
 vector<Eigen::Vector3d> traj_pos, traj_vel, traj_acc;
+
 nav_msgs::Path des_path;
+nav_msgs::Path groundtruth_path;
+Collector collector("/home/luochen/drone-project/drone-project/flylog/data.csv");
 Eigen::Quaterniond initial_q;
 bool get_initialpos = false;
 Eigen::Vector3d initial_pos;
 double initial_yaw;
 Eigen::Vector3d cur_pos;
+Eigen::Vector3d cur_vel;
 double cur_yaw;
 TrajGenerator generator;
 void cmdCallback(const ros::TimerEvent &e)
@@ -57,18 +61,9 @@ void cmdCallback(const ros::TimerEvent &e)
   }
   else if (times >= points_size)
   {
-
-    /* hover when finish traj_ */
     pos = generator.traj_pos_[points_size - 1];
     vel.setZero();
     acc.setZero();
-    if(times - points_size > 30){
-      generator.last_pos = pos;
-      generator.RandomGenerator();
-      // des_path.poses.clear();
-      times = 0;
-    }
-
   }
   else
   {
@@ -98,18 +93,35 @@ void cmdCallback(const ros::TimerEvent &e)
   geometry_msgs::PoseStamped despose_stamped;
   despose_stamped.header = cmd.header;
   despose_stamped.header.frame_id = "map";
-  despose_stamped.pose.position.x = pos(0) + initial_pos(0);
-  despose_stamped.pose.position.y = pos(1) + initial_pos(1);
-  despose_stamped.pose.position.z = pos(2) + initial_pos(2);
+  pos = pos + initial_pos;
+
+  despose_stamped.pose.position.x = pos(0);
+  despose_stamped.pose.position.y = pos(1);
+  despose_stamped.pose.position.z = pos(2);
   des_path.header = cmd.header;
   des_path.header.frame_id = "map";
   des_path.poses.push_back(despose_stamped);
   pub_des_path.publish(des_path);
+  // groundtruth
+  geometry_msgs::PoseStamped groundtruth_stamped;
+  groundtruth_stamped.header = cmd.header;
+  groundtruth_stamped.header.frame_id = "map";
+
+  collector.write(time_now.toNSec(), cur_pos, cur_vel, pos, vel);
+  groundtruth_stamped.pose.position.x = cur_pos(0);
+  groundtruth_stamped.pose.position.y = cur_pos(1);
+  groundtruth_stamped.pose.position.z = cur_pos(2);
+  groundtruth_path.header = cmd.header;
+  groundtruth_path.header.frame_id = "map";
+  groundtruth_path.poses.push_back(groundtruth_stamped);
+  pub_groundtruth_path.publish(groundtruth_path);
   last_yaw_ = cmd.yaw;
-  // 获得初始的pose，在初始的pose为起点产生轨迹
+
   if(get_initialpos){
     times++;
+    if(times == points_size) times = 0;
     pos_cmd_pub.publish(cmd);
+    
   }
   
 }
@@ -122,6 +134,9 @@ void posCallback(const nav_msgs::Odometry::ConstPtr &msg){
   cur_pos(0) = msg->pose.pose.position.x;
   cur_pos(1) = msg->pose.pose.position.y;
   cur_pos(2) = msg->pose.pose.position.z;
+  cur_vel(0) = msg->twist.twist.linear.x;
+  cur_vel(1) = msg->twist.twist.linear.y;
+  cur_vel(2) = msg->twist.twist.linear.z;
   Eigen::Quaterniond q(msg->pose.pose.orientation.w, msg->pose.pose.orientation.x, msg->pose.pose.orientation.y, msg->pose.pose.orientation.z);
   cur_yaw = fromQuaternion2yaw(q);
   if(get_initialpos == false){
@@ -132,7 +147,7 @@ void posCallback(const nav_msgs::Odometry::ConstPtr &msg){
     initial_q = q;
     initial_yaw = fromQuaternion2yaw(q);
     get_initialpos = true;
-    
+    //ROS_INFO("x = %lf, y = %lf, z = %lf", initial_pos(0), initial_pos(1), initial_pos(2));
   }
 }
 void circle_generate(){
@@ -146,7 +161,7 @@ void circle_generate(){
   for(int i = 0; i < sample_time; i++){
     Eigen::Vector3d p(radius * cos((2 * M_PI / sample_time) * i + M_PI) + radius, radius * sin((2 * M_PI / sample_time) * i + M_PI), 0);
     Eigen::Vector3d v(- radius * 2 * M_PI / traj_duration_ * sin((2 * M_PI / sample_time) * i + M_PI), radius * 2 * M_PI / traj_duration_  * cos((2 * M_PI / sample_time) * i + M_PI),  0);
-    
+    // Eigen::Vector3d a = Vector3d::Zero();
     Eigen::Vector3d a( - radius * pow(2 * M_PI / traj_duration_ , 2)* cos((2 * M_PI / sample_time) * i + M_PI), -radius * pow(2 * M_PI / traj_duration_ , 2) * sin((2 * M_PI / sample_time) * i + M_PI), 0);
     generator.traj_pos_[i] = p;
     generator.traj_vel_[i] = v;
@@ -158,20 +173,21 @@ void circle_generate(){
 int main(int argc, char **argv)
 {
   ros::init(argc, argv, "traj_generator");
- 
+  // ros::NodeHandle node;
   ros::NodeHandle nh("~");
   
   initial_pos_sub = nh.subscribe<nav_msgs::Odometry>("/vins_fusion/imu_propagate", 100, posCallback);
   pos_cmd_pub = nh.advertise<quadrotor_msgs::PositionCommand>("/position_cmd", 50);
   pub_des_path = nh.advertise<nav_msgs::Path>("des_path", 1000);
+  pub_groundtruth_path = nh.advertise<nav_msgs::Path>("groundtruth_path", 1000);
   ros::Duration(0.5).sleep();
   // Matrix<double, 3, 3> waypoints;
   // waypoints << 0, 0, 0,\
   //              1, 0, 1,\
   //              2, 1, 2;
   // generator.Generator(waypoints.transpose());
-  generator.RandomGenerator();
- 
+  //generator.RandomGenerator();
+  generator.circle_generate(5, 2);
   ros::Timer cmd_timer = nh.createTimer(ros::Duration(T), cmdCallback);
 
   /* control parameter */

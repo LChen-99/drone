@@ -13,7 +13,9 @@ double Controller::thr2acc_ = 0;
 double Controller::P_ = 1e6;
 Controller::Controller(Parameter_t &param) : param_(param)
 {
-  
+  disturbance_obs(0) = 0;
+  disturbance_obs(1) = 0;
+  disturbance_obs(2) = 0;
   resetThrustMapping();
 }
 
@@ -28,7 +30,10 @@ Controller::calculateControl(const Desired_State_t &des,
     Controller_Output_t &u)
 {
   /* WRITE YOUR CODE HERE */
+	// 计算网络输出
+    
       //compute disired acceleration
+      
       Eigen::Vector3d des_acc(0.0, 0.0, 0.0);
       Eigen::Vector3d Kp,Kv;
       Kp << param_.gain.Kp0, param_.gain.Kp1, param_.gain.Kp2;
@@ -41,7 +46,7 @@ Controller::calculateControl(const Desired_State_t &des,
       double yaw_odom = fromQuaternion2yaw(odom.q);
       double sin = std::sin(yaw_odom);
       double cos = std::cos(yaw_odom);
-      roll = ((0) * sin - des_acc(1) * cos )/ param_.gra;
+      roll = (des_acc(0) * sin - des_acc(1) * cos )/ param_.gra;
       pitch = (des_acc(0) * cos + des_acc(1) * sin )/ param_.gra;
       // yaw = fromQuaternion2yaw(des.q);
       yaw_imu = fromQuaternion2yaw(imu.q);
@@ -99,30 +104,31 @@ LinearController::calculateControl(const Desired_State_t &des,
   /* WRITE YOUR CODE HERE */
       //compute disired acceleration
       Odom_Data_t cur = odom;
-      if((des.p - odom.p).norm() > 3){
-        ROS_WARN("des.p - odom.p  = %4lf is large!", (des.p - odom.p).norm());
-        cur.v = des.v;
-        cur.p = des.p;
-      }
+      // if((des.p - odom.p).norm() > 3){
+      //   ROS_WARN("des.p - odom.p  = %4lf is large!", (des.p - odom.p).norm());
+      //   cur.v = des.v;
+      //   cur.p = des.p;
+      // }
       Eigen::Vector3d des_acc(0.0, 0.0, 0.0);
       Eigen::Vector3d Kp,Kv;
       Kp << param_.gain.Kp0, param_.gain.Kp1, param_.gain.Kp2;
       Kv << param_.gain.Kv0, param_.gain.Kv1, param_.gain.Kv2;
+
       des_acc = des.a + Kv.asDiagonal() * (des.v - cur.v) + Kp.asDiagonal() * (des.p - cur.p);
+
       des_acc += Eigen::Vector3d(0,0,param_.gra);
 
       u.thrust = computeDesiredCollectiveThrustSignal(des_acc);
+ 
       double roll,pitch,yaw,yaw_imu;
       double yaw_odom = fromQuaternion2yaw(cur.q);
       double sin = std::sin(yaw_odom);
       double cos = std::cos(yaw_odom);
-      roll = ((0) * sin - des_acc(1) * cos )/ param_.gra;
+      roll = (des_acc(0) * sin - des_acc(1) * cos )/ param_.gra;
       pitch = (des_acc(0) * cos + des_acc(1) * sin )/ param_.gra;
-      // yaw = fromQuaternion2yaw(des.q);
+
       yaw_imu = fromQuaternion2yaw(imu.q);
-      // Eigen::Quaterniond q = Eigen::AngleAxisd(yaw,Eigen::Vector3d::UnitZ())
-      //   * Eigen::AngleAxisd(roll,Eigen::Vector3d::UnitX())
-      //   * Eigen::AngleAxisd(pitch,Eigen::Vector3d::UnitY());
+ 
       Eigen::Quaterniond q = Eigen::AngleAxisd(des.yaw,Eigen::Vector3d::UnitZ())
         * Eigen::AngleAxisd(pitch,Eigen::Vector3d::UnitY())
         * Eigen::AngleAxisd(roll,Eigen::Vector3d::UnitX());
@@ -213,9 +219,15 @@ Controller::estimateThrustModel(
     double K = gamma * P_ * thr;
     thr2acc_ = thr2acc_ + K * (est_a(2) - thr * thr2acc_);
     P_ = (1 - K * thr) * P_ / rho2_;
+    static size_t tick  = 0;
     if(param.thr_map.print_val){
-      ROS_INFO("thr2acc = %6.3f", thr2acc_);
-      ROS_INFO("hover_percentage = %6.3f", param_.gra / thr2acc_);
+      tick++;
+      if(tick % 100 == 0){
+        ROS_INFO("thr2acc = %6.3f", thr2acc_);
+        ROS_INFO("hover_percentage = %6.3f", param_.gra / thr2acc_);
+        
+      }
+      
       //printf("%6.3f,%6.3f,%6.3f,%6.3f\n", thr2acc_, gamma, K, P_);
     }
     // debug_msg_.thr2acc = thr2acc_;
@@ -241,11 +253,11 @@ SE3Controller::calculateControl(const Desired_State_t &des,
   /* WRITE YOUR CODE HERE */
       //compute disired acceleration
       Odom_Data_t cur = odom;
-      if((des.p - odom.p).norm() > 2){
-        ROS_WARN("des.p - odom.p  = %4lf is too large!", (des.p - odom.p).norm());
-        cur.v = des.v;
-        cur.p = des.p;
-      }
+      // if((des.p - odom.p).norm() > 2){
+      //   ROS_WARN("des.p - odom.p  = %4lf is too large!", (des.p - odom.p).norm());
+      //   cur.v = des.v;
+      //   cur.p = des.p;
+      // }
       Eigen::Vector3d des_acc(0.0, 0.0, 0.0);
       Eigen::Vector3d Kp,Kv;
       Kp << param_.gain.Kp0, param_.gain.Kp1, param_.gain.Kp2;
@@ -333,54 +345,92 @@ Neural_Fly_Control::calculateControl(const Desired_State_t &des,
 {
   /* WRITE YOUR CODE HERE */
       //compute disired acceleration
-      
+      //计算网络输出
+	Odom_Data_t cur = odom; 
+	Eigen::Vector3d des_acc(0.0, 0.0, 0.0);
+  Eigen::Vector3d Kp,Kv;
+  Kp << param_.gain.Kp0, param_.gain.Kp1, param_.gain.Kp2;
+  Kv << param_.gain.Kv0, param_.gain.Kv1, param_.gain.Kv2;
 
-     
-	    // cout << "phi_output = " <<  phi_output << endl;
-      Odom_Data_t cur = odom;
-      if((des.p - odom.p).norm() > 2){
-        ROS_WARN("des.p - odom.p  = %4lf is too large!", (des.p - odom.p).norm());
-        cur.v = des.v;
-        cur.p = des.p;
+  des_acc = des.a + Kv.asDiagonal() * (des.v - cur.v) + Kp.asDiagonal() * (des.p - cur.p);
+
+  des_acc += Eigen::Vector3d(0,0,param_.gra);
+
+  
+	
+
+	
+	// Eigen::Vector3d des_acc(0.0, 0.0, 0.0);
+	// Eigen::Vector3d Kp,Kv;
+	// Kp << param_.gain.Kp0, param_.gain.Kp1, param_.gain.Kp2;
+	// Kv << param_.gain.Kv0, param_.gain.Kv1, param_.gain.Kv2;
+	
+	// des_acc = des.a + Kv.asDiagonal() * (des.v - cur.v) + Kp.asDiagonal() * (des.p - cur.p);
+	// des_acc += Eigen::Vector3d(0,0,param_.gra);
+	// // cout << "des_acc =" << des_acc << endl;
+	// // cout << "f =" << f << endl;
+  if(param_.disturbance_obs.use && binit_){
+    Vector3d f;
+    if(!param_.disturbance_obs.constant){
+      Matrix<double, 11, 1> feature;
+      feature.block(0, 0, 3, 1) = odom.v;
+      feature(3, 0) = odom.q.x();
+      feature(4, 0) = odom.q.y();
+      feature(5, 0) = odom.q.z();
+      feature(6, 0) = odom.q.w();
+      double hover_ = 910.0 / (1564.0 * 1000.0);
+
+      feature(7, 0) = pwm.pwm[0] * hover_;
+      feature(8, 0) = pwm.pwm[1] * hover_;
+      feature(9, 0) = pwm.pwm[2] * hover_;
+      feature(10, 0) = pwm.pwm[3] * hover_;
+      Vector3d phi_output = model_->forward(feature);
+      auto a = Kalman->get_a();
+      
+      f(0) = phi_output.transpose() * a.block<3, 1>(0, 0);
+      f(1) = phi_output.transpose() * a.block<3, 1>(3, 0);
+      f(2) = phi_output.transpose() * a.block<3, 1>(6, 0);
+      if(f.norm() > 4){
+        f = 3. * f / f.norm();
       }
-
-       
-      Eigen::Vector3d des_acc(0.0, 0.0, 0.0);
-      Eigen::Vector3d Kp,Kv;
-      Kp << param_.gain.Kp0, param_.gain.Kp1, param_.gain.Kp2;
-      Kv << param_.gain.Kv0, param_.gain.Kv1, param_.gain.Kv2;
+      des_acc -= f;
+    }else{
+      auto a = Kalman->get_a();
+      Vector3d phi_output = Eigen::Vector3d(1, 1, 1);
       
-      des_acc = des.a + Kv.asDiagonal() * (des.v - cur.v) + Kp.asDiagonal() * (des.p - cur.p);
-      des_acc += Eigen::Vector3d(0,0,param_.gra);
-      Eigen::Matrix3d rotation_q = cur.q.toRotationMatrix();
-      Eigen::Matrix3d rotation_des = Eigen::Matrix3d::Zero();
-      Eigen::Vector3d rotation_z = rotation_q.col(2);
-      //cout << des_acc << endl;
-      double acc_z = des_acc.dot(rotation_z);
-      Eigen::Vector3d acc(0, 0, acc_z);
-      u.thrust = computeDesiredCollectiveThrustSignal(acc);
-      //double roll,pitch,yaw,yaw_imu;
-      Eigen::Vector3d zb_des, xc_des, yb_des, xb_des;
-      zb_des = des_acc / des_acc.norm();
-      xc_des = {cos(des.yaw), sin(des.yaw), 0};
-      yb_des = zb_des.cross(xc_des) / zb_des.cross(xc_des).norm();
-      xb_des = yb_des.cross(zb_des);
-      xb_des = xb_des / xb_des.norm();
-      rotation_des.col(0) = xb_des;
-      rotation_des.col(1) = yb_des;
-      rotation_des.col(2) = zb_des;
-      Eigen::Quaterniond q_des(rotation_des);
+      f(0) = phi_output.transpose() * a.block<3, 1>(0, 0);
+      f(1) = phi_output.transpose() * a.block<3, 1>(3, 0);
+      f(2) = phi_output.transpose() * a.block<3, 1>(6, 0);
+      if(f.norm() > 4){
+        f = 3. * f / f.norm();
+      }
+      des_acc -= f; 
+    }
+    disturbance_obs = f;
+    std::cout << "f = " << f.transpose() << std::endl;
+  }
+  // std::cout << "des_acc = " << des_acc.transpose() << endl;
+  // PID
+  u.thrust = computeDesiredCollectiveThrustSignal(des_acc);
 
-      u.q = imu.q * cur.q.inverse() * q_des;
+  double roll,pitch,yaw,yaw_imu;
+  double yaw_odom = fromQuaternion2yaw(cur.q);
+  double sin = std::sin(yaw_odom);
+  double cos = std::cos(yaw_odom);
+  roll = (des_acc(0) * sin - des_acc(1) * cos )/ param_.gra;
+  pitch = (des_acc(0) * cos + des_acc(1) * sin )/ param_.gra;
 
+  yaw_imu = fromQuaternion2yaw(imu.q);
+
+  Eigen::Quaterniond q = Eigen::AngleAxisd(des.yaw,Eigen::Vector3d::UnitZ())
+    * Eigen::AngleAxisd(pitch,Eigen::Vector3d::UnitY())
+    * Eigen::AngleAxisd(roll,Eigen::Vector3d::UnitX());
+  // /vins_fusion/imu_propagate 和 /mavros/imu/data 的坐标系定义不同，
+  //  Rw1_imu * Rimu_w2 * Rw2_des = Rw1_des
+  u.q = imu.q * cur.q.inverse() * q;
 
   /* WRITE YOUR CODE HERE */
 
-  //used for debug
-  // debug_msg_.des_p_x = des.p(0);
-  // debug_msg_.des_p_y = des.p(1);
-  // debug_msg_.des_p_z = des.p(2);
-  
   debug_msg_.des_v_x = des.v(0);
   debug_msg_.des_v_y = des.v(1);
   debug_msg_.des_v_z = des.v(2);
@@ -405,42 +455,68 @@ Neural_Fly_Control::calculateControl(const Desired_State_t &des,
   return debug_msg_;
 }
 
-void Neural_Fly_Control::updateAdapt(const Desired_State_t &des,
+void Neural_Fly_Control::updateAdapt(double t, const Desired_State_t &des,
     const Odom_Data_t &odom,
     const Imu_Data_t &imu, 
     const Pwm_Data_t &pwm,
-    const Controller_Output_t &u){
+    const double &u){
 
-  Odom_Data_t cur = odom;    
-  Matrix<double, 11, 1> feature;
-  feature.block(0, 0, 3, 1) = odom.v;
-  feature(3, 0) = odom.q.x();
-  feature(4, 0) = odom.q.y();
-  feature(5, 0) = odom.q.z();
-  feature(6, 0) = odom.q.w();
-  double hover_ = 910.0 / (1564.0 * 1000.0);
-  // cout << "pwm.pwm[0] = " << pwm.pwm[0] << endl;
-  // cout << "pwm.pwm[1] = " << pwm.pwm[1] << endl;
-  // cout << "pwm.pwm[2] = " << pwm.pwm[2] << endl;
-  // cout << "pwm.pwm[3] = " << pwm.pwm[3] << endl;
-  feature(7, 0) = pwm.pwm[0] * hover_;
-  feature(8, 0) = pwm.pwm[1] * hover_;
-  feature(9, 0) = pwm.pwm[2] * hover_;
-  feature(10, 0) = pwm.pwm[3] * hover_;
-  // cout << "feature = " << feature << endl;
-  // cur.q --- R^w(vins)_imu 
-  // imu.q --- R^w(px4)_imu
-  Vector3d a_w = cur.q * imu.a - Eigen::Vector3d(0, 0, param_.gra);
-  Vector3d phi_output = model_->forward(feature);
-  Vector3d f_measurement = a_w * param_.mass;
-  Vector3d s = (des.v - cur.v) + (des.p - cur.p);
-  Kalman->update(f_measurement, s, phi_output);
-  auto a = Kalman->get_a();
-  // cout << "a = " << a << endl;
-  Vector3d f_;
-  f_(0) = phi_output.transpose() * a.block<3, 1>(0, 0);
-  f_(1) = phi_output.transpose() * a.block<3, 1>(3, 0);
-  f_(2) = phi_output.transpose() * a.block<3, 1>(6, 0);
-  // cout << "f_measurement = " << f_measurement << endl;
-  // cout << "f = " << f_ << endl;
+	
+	Odom_Data_t cur = odom;    
+	Matrix<double, 11, 1> feature;
+	feature.block(0, 0, 3, 1) = odom.v;
+	feature(3, 0) = odom.q.x();
+	feature(4, 0) = odom.q.y();
+	feature(5, 0) = odom.q.z();
+	feature(6, 0) = odom.q.w();
+  // 1564是悬停PWM值
+	double hover_ = 910.0 / (1500.0 * 1000.0);
+
+	feature(7, 0) = pwm.pwm[0] * hover_;
+	feature(8, 0) = pwm.pwm[1] * hover_;
+	feature(9, 0) = pwm.pwm[2] * hover_;
+	feature(10, 0) = pwm.pwm[3] * hover_;
+
+	// cur.q --- R^w(vins)_imu 
+	// imu.q --- R^w(px4)_imu
+  Vector3d phi_output;
+  if(param_.disturbance_obs.constant){
+    phi_output = Eigen::Vector3d(1, 1, 1);
+  }else{
+    phi_output = model_->forward(feature);
+  }
+
+  Vector3d a_w;
+  if(prev_t == -1){
+    prev_t = t;
+    prev_vel = cur.v;
+    a_w = odom.q * imu.a - Eigen::Vector3d(0, 0, param_.gra);
+  }else{
+    double delta_t = t - prev_t;
+	  a_w = (cur.v - prev_vel) / delta_t;
+    // cout << "delta_t = " << delta_t << endl;
+  }
+	
+	//计算网络输出
+  // cout << "a_w = " << a_w << endl;
+	Vector3d fu(0, 0, u * thr2acc_);
+	Vector3d f_measurement = (a_w - Eigen::Vector3d(0, 0, -param_.gra) - cur.q * fu);
+	Vector3d s = (des.v - cur.v) + (des.p - cur.p);
+	// 更新a
+	Kalman->update(f_measurement, s, phi_output);
+	auto a = Kalman->get_a();
+	// cout << "a = " << a << endl;
+	Vector3d f_;
+	f_(0) = phi_output.transpose() * a.block<3, 1>(0, 0);
+	f_(1) = phi_output.transpose() * a.block<3, 1>(3, 0);
+	f_(2) = phi_output.transpose() * a.block<3, 1>(6, 0);
+  if(!binit_ && (f_measurement - f_).norm() < 0.1){
+		binit_ = true;
+    ROS_INFO("obs init!");
+	}
+  disturbance_mea = f_measurement;
+  prev_t = t;
+	prev_vel = cur.v;
+	// cout << "f_measurement = " << f_measurement << endl;
+	// cout << "f = " << f_ << endl;
 }

@@ -60,13 +60,18 @@ public:
 		double speed;
 	};
 
+	struct DisturbanceObs{
+		bool constant;
+		bool use;
+	};
+
 	Gain gain;
 	RotorDrag rt_drag;
 	MsgTimeout msg_timeout;
 	RCReverse rc_reverse;
 	ThrustMapping thr_map;
 	AutoTakeoffLand takeoff_land;
-
+	DisturbanceObs disturbance_obs;
 	int pose_solver;
 	double mass;
 	double gra;

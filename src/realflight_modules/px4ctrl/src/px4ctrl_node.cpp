@@ -1,5 +1,6 @@
 #include <ros/ros.h>
 #include "PX4CtrlFSM.h"
+#include "tic_toc.h"
 #include <signal.h>
 #include <string>
 void mySigintHandler(int sig)
@@ -129,8 +130,9 @@ int main(int argc, char *argv[])
     {
         r.sleep();
         ros::spinOnce();
-        
+        TicToc processtime;
         fsm.process(); // We DO NOT rely on feedback as trigger, since there is no significant performance difference through our test.
+        ROS_DEBUG("process cost: %lf", processtime.toc());
     }
 
     return 0;

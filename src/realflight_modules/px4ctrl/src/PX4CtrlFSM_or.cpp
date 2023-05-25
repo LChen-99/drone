@@ -233,7 +233,7 @@ void PX4CtrlFSM::process()
 			set_hov_with_odom();
 			ROS_INFO("\033[32m[px4ctrl] AUTO_TAKEOFF --> AUTO_HOVER(L2)\033[32m");
 
-			takeoff_land.delay_trigger.first = true;
+			takeoff_land.first = true;
 			takeoff_land.delay_trigger.second = now_time + ros::Duration(AutoTakeoffLand_t::DELAY_TRIGGER_TIME);
 		}
 		else
