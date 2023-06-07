@@ -80,16 +80,22 @@ public:
 	bool get_landed() { return takeoff_land.landed; }
 	// server : start collecting
 	bool doCollectReq(std_srvs::Trigger::Request& req, std_srvs::Trigger::Response& resp);
-	void writeCurState (const Controller_Output_t u, const ros::Time& now_time){
+	void writeCurState (const Controller_Output_t u, const ros::Time& now_time, const Desired_State_t& des){
 		Eigen::Vector3d pos(odom_data.p);
 		Eigen::Vector3d vel(odom_data.v);
 		Eigen::Quaterniond q(odom_data.q);
+		
 		Eigen::Vector4d pwm(pwm_data.pwm[0], pwm_data.pwm[1], pwm_data.pwm[2], pwm_data.pwm[3]);
 		collector.outfile << now_time << ",";
 		collector.outfile << "\"[" << pos(0) << "," << pos(1) << "," << pos(2) << "]\",";
 		collector.outfile << "\"[" << vel(0) << "," << vel(1) << "," << vel(2) << "]\",";
+		collector.outfile << "\"[" << des.p(0) << "," << des.p(1) << "," << des.p(2) << "]\",";
+		collector.outfile << "\"[" << des.v(0) << "," << des.v(1) << "," << des.v(2) << "]\",";
 		collector.outfile << "\"[" << q.w() << "," << q.x() << "," << q.y() << "," << q.z() << "]\",";
 		collector.outfile << "\"[" << pwm(0) << "," << pwm(1) << "," << pwm(2) <<  "," << pwm(3) << "]\",";
+		collector.outfile << "\"[" << controller->Kalman->get_a()(0) << "," << controller->Kalman->get_a()(1) << "," << controller->Kalman->get_a()(2) 
+		<<  "," << controller->Kalman->get_a()(3) <<  "," << controller->Kalman->get_a()(4) <<  "," << controller->Kalman->get_a()(5) <<  "," 
+		<< controller->Kalman->get_a()(6) <<  "," << controller->Kalman->get_a()(7) <<  "," << controller->Kalman->get_a()(8) <<  "]\",";
 		collector.outfile << "\"[" << controller->disturbance_obs(0) << "," << controller->disturbance_obs(1) << "," << controller->disturbance_obs(2) << "]\",";
 		collector.outfile << "\"[" << controller->disturbance_mea(0) << "," << controller->disturbance_mea(1) << "," << controller->disturbance_mea(2) << "]\",";
 		collector.outfile  << u.thrust << "," << controller->thr2acc_  << "," << bat_data.volt << "," << bat_data.percentage << std::endl;

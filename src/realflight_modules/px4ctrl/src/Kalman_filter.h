@@ -8,11 +8,11 @@ class KalmanAdaptive{
 
 public:
 
-    KalmanAdaptive(double t) : dt(t), lamda(10){
-        R = Matrix<double, 3, 3>::Identity();
-        Q = Matrix<double, 9, 9>::Identity();
-        P = Matrix<double, 9, 9>::Identity();
-        a = Matrix<double, 9, 1>::Ones();
+    KalmanAdaptive(double t, Parameter_t& param) : dt(1.0 / param.ctrl_freq_max), lamda(param.disturbance_obs.lamda), param_(param){
+        R = param_.disturbance_obs.R * Matrix<double, 3, 3>::Identity();
+        Q = param_.disturbance_obs.Q * Matrix<double, 9, 9>::Identity();
+        P = param_.disturbance_obs.P * Matrix<double, 9, 9>::Identity();
+        a = Matrix<double, 9, 1>::Zero();
     }
 
     void update(Vector3d y_F, Vector3d s, Vector3d phi_input){
@@ -35,6 +35,7 @@ public:
     }
 
 private:
+    Parameter_t& param_;
     Matrix<double, 3, 3> R;
     Matrix<double, 9, 9> P;
     Matrix<double, 9, 9> Q;

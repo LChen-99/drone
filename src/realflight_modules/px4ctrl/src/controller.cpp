@@ -283,19 +283,6 @@ SE3Controller::calculateControl(const Desired_State_t &des,
       rotation_des.col(2) = zb_des;
       Eigen::Quaterniond q_des(rotation_des);
       ////到这
-      // double yaw_odom = fromQuaternion2yaw(odom.q);
-      // double sin = std::sin(yaw_odom);
-      // double cos = std::cos(yaw_odom);
-      // roll = (des_acc(0) * sin - des_acc(1) * cos )/ param_.gra;
-      // pitch = (des_acc(0) * cos + des_acc(1) * sin )/ param_.gra;
-      // yaw = fromQuaternion2yaw(des.q);
-      // yaw_imu = fromQuaternion2yaw(imu.q);
-      // Eigen::Quaterniond q = Eigen::AngleAxisd(yaw,Eigen::Vector3d::UnitZ())
-      //   * Eigen::AngleAxisd(roll,Eigen::Vector3d::UnitX())
-      //   * Eigen::AngleAxisd(pitch,Eigen::Vector3d::UnitY());
-      // Eigen::Quaterniond q = Eigen::AngleAxisd(des.yaw,Eigen::Vector3d::UnitZ())
-      //   * Eigen::AngleAxisd(pitch,Eigen::Vector3d::UnitY())
-      //   * Eigen::AngleAxisd(roll,Eigen::Vector3d::UnitX());
       // /vins_fusion/imu_propagate 和 /mavros/imu/data 的坐标系定义不同，
       //  Rw1_imu * Rimu_w2 * Rw2_des = Rw1_des
       u.q = imu.q * cur.q.inverse() * q_des;
@@ -390,9 +377,11 @@ Neural_Fly_Control::calculateControl(const Desired_State_t &des,
       f(0) = phi_output.transpose() * a.block<3, 1>(0, 0);
       f(1) = phi_output.transpose() * a.block<3, 1>(3, 0);
       f(2) = phi_output.transpose() * a.block<3, 1>(6, 0);
-      if(f.norm() > 4){
-        f = 3. * f / f.norm();
+      //只对z轴限制
+      if(abs(f(2)) > 1.0){
+        f(2) = 1.0 * f(2) / abs(f(2));
       }
+      // f(2) = 0;
       des_acc -= f;
     }else{
       auto a = Kalman->get_a();
@@ -401,9 +390,10 @@ Neural_Fly_Control::calculateControl(const Desired_State_t &des,
       f(0) = phi_output.transpose() * a.block<3, 1>(0, 0);
       f(1) = phi_output.transpose() * a.block<3, 1>(3, 0);
       f(2) = phi_output.transpose() * a.block<3, 1>(6, 0);
-      if(f.norm() > 4){
-        f = 3. * f / f.norm();
+      if(abs(f(2)) > 1.0){
+        f(2) = 1.0 * f(2) / abs(f(2));
       }
+      // f(2) = 0;  
       des_acc -= f; 
     }
     disturbance_obs = f;
@@ -411,23 +401,43 @@ Neural_Fly_Control::calculateControl(const Desired_State_t &des,
   }
   // std::cout << "des_acc = " << des_acc.transpose() << endl;
   // PID
-  u.thrust = computeDesiredCollectiveThrustSignal(des_acc);
 
-  double roll,pitch,yaw,yaw_imu;
-  double yaw_odom = fromQuaternion2yaw(cur.q);
-  double sin = std::sin(yaw_odom);
-  double cos = std::cos(yaw_odom);
-  roll = (des_acc(0) * sin - des_acc(1) * cos )/ param_.gra;
-  pitch = (des_acc(0) * cos + des_acc(1) * sin )/ param_.gra;
+  Eigen::Matrix3d rotation_q = cur.q.toRotationMatrix();
+  Eigen::Matrix3d rotation_des = Eigen::Matrix3d::Zero();
+  Eigen::Vector3d rotation_z = rotation_q.col(2);
+  Eigen::Vector3d zb_des, xc_des, yb_des, xb_des;
+  double acc_z = des_acc.dot(rotation_z);
+  Eigen::Vector3d acc(0, 0, acc_z);
+  
+  u.thrust = computeDesiredCollectiveThrustSignal(acc);
+  // std::cout << "u.thrust = " << u.thrust << std::endl;
+  // double roll,pitch,yaw,yaw_imu;
+  // double yaw_odom = fromQuaternion2yaw(cur.q);
+  // double sin = std::sin(yaw_odom);
+  // double cos = std::cos(yaw_odom);
+  // roll = (des_acc(0) * sin - des_acc(1) * cos )/ param_.gra;
+  // pitch = (des_acc(0) * cos + des_acc(1) * sin )/ param_.gra;
 
-  yaw_imu = fromQuaternion2yaw(imu.q);
+  // yaw_imu = fromQuaternion2yaw(imu.q);
 
-  Eigen::Quaterniond q = Eigen::AngleAxisd(des.yaw,Eigen::Vector3d::UnitZ())
-    * Eigen::AngleAxisd(pitch,Eigen::Vector3d::UnitY())
-    * Eigen::AngleAxisd(roll,Eigen::Vector3d::UnitX());
+  // Eigen::Quaterniond q = Eigen::AngleAxisd(des.yaw,Eigen::Vector3d::UnitZ())
+  //   * Eigen::AngleAxisd(pitch,Eigen::Vector3d::UnitY())
+  //   * Eigen::AngleAxisd(roll,Eigen::Vector3d::UnitX());
+  
+  zb_des = des_acc / des_acc.norm();
+  xc_des = {cos(des.yaw), sin(des.yaw), 0};
+  yb_des = zb_des.cross(xc_des) / zb_des.cross(xc_des).norm();
+  xb_des = yb_des.cross(zb_des);
+  xb_des = xb_des / xb_des.norm();
+  rotation_des.col(0) = xb_des;
+  rotation_des.col(1) = yb_des;
+  rotation_des.col(2) = zb_des;
+  Eigen::Quaterniond q_des(rotation_des);
+     
+  u.q = imu.q * cur.q.inverse() * q_des;
   // /vins_fusion/imu_propagate 和 /mavros/imu/data 的坐标系定义不同，
   //  Rw1_imu * Rimu_w2 * Rw2_des = Rw1_des
-  u.q = imu.q * cur.q.inverse() * q;
+  // u.q = imu.q * cur.q.inverse() * q;
 
   /* WRITE YOUR CODE HERE */
 
@@ -501,7 +511,7 @@ void Neural_Fly_Control::updateAdapt(double t, const Desired_State_t &des,
   // cout << "a_w = " << a_w << endl;
 	Vector3d fu(0, 0, u * thr2acc_);
 	Vector3d f_measurement = (a_w - Eigen::Vector3d(0, 0, -param_.gra) - cur.q * fu);
-	Vector3d s = (des.v - cur.v) + (des.p - cur.p);
+	Vector3d s = (cur.v - des.v) + (cur.p - des.p);
 	// 更新a
 	Kalman->update(f_measurement, s, phi_output);
 	auto a = Kalman->get_a();

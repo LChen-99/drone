@@ -353,7 +353,7 @@ void PX4CtrlFSM::process()
 	if(start_collecting_){
 		TicToc tic;
 		ROS_INFO("Strat collecting data");
-		this->writeCurState(u, now_time);
+		this->writeCurState(u, now_time, des);
 		ROS_INFO("write cost: %lf", tic.toc());
 	}
 	

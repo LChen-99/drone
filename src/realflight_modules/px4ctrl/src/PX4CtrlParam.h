@@ -63,6 +63,11 @@ public:
 	struct DisturbanceObs{
 		bool constant;
 		bool use;
+		double Q;
+		double R;
+		double t;
+		double lamda;
+		double P;
 	};
 
 	Gain gain;

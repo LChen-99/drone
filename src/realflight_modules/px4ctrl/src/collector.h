@@ -19,7 +19,7 @@ public:
             
         }else{
             ROS_INFO("open file");
-            outfile << "t,pos,vel,quan,pwm,disturbance_obs,disturbance_mea,thrust,thr2acc,volt,bat_percentage" << std::endl;
+            outfile << "t,p,v,p_d,v_d,q,pwm,a,f_obs,f_mea,thrust,thr2acc,volt,bat_percentage" << std::endl;
         }
     }
     

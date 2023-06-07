@@ -14,16 +14,17 @@ find_package(catkin REQUIRED COMPONENTS
   nav_msgs
   tf
 )
+set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
+# list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
-find_package(Eigen3 REQUIRED) 
+find_package(Eigen3) 
 
 catkin_package(
 )
 
 include_directories(
   ${catkin_INCLUDE_DIRS}
-  ${EIGEN_INCLUDE_DIRS}
+  ${EIGEN3_INCLUDE_DIRS}
   include/${PROJECT_NAME}
   include
 )

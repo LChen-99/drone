@@ -12,6 +12,7 @@
 ros::Publisher pos_cmd_pub;
 ros::Publisher pub_des_path;
 ros::Subscriber initial_pos_sub;
+ros::Publisher pub_groundtruth_path;
 quadrotor_msgs::PositionCommand cmd;
 double pos_gain[3] = {0, 0, 0};
 double vel_gain[3] = {0, 0, 0};
@@ -30,11 +31,13 @@ double last_yaw_, last_yaw_dot_;
 double time_forward_;
 vector<Eigen::Vector3d> traj_pos, traj_vel, traj_acc;
 nav_msgs::Path des_path;
+nav_msgs::Path groundtruth_path;
 Eigen::Quaterniond initial_q;
 bool get_initialpos = false;
 Eigen::Vector3d initial_pos;
 double initial_yaw;
 Eigen::Vector3d cur_pos;
+Eigen::Vector3d cur_vel;
 double cur_yaw;
 TrajGenerator generator;
 void cmdCallback(const ros::TimerEvent &e)
@@ -105,6 +108,19 @@ void cmdCallback(const ros::TimerEvent &e)
   des_path.header.frame_id = "map";
   des_path.poses.push_back(despose_stamped);
   pub_des_path.publish(des_path);
+
+  geometry_msgs::PoseStamped groundtruth_stamped;
+  groundtruth_stamped.header = cmd.header;
+  groundtruth_stamped.header.frame_id = "map";
+
+  // collector.write(time_now.toNSec(), cur_pos, cur_vel, pos, vel);
+  groundtruth_stamped.pose.position.x = cur_pos(0);
+  groundtruth_stamped.pose.position.y = cur_pos(1);
+  groundtruth_stamped.pose.position.z = cur_pos(2);
+  groundtruth_path.header = cmd.header;
+  groundtruth_path.header.frame_id = "map";
+  groundtruth_path.poses.push_back(groundtruth_stamped);
+  pub_groundtruth_path.publish(groundtruth_path);
   last_yaw_ = cmd.yaw;
   // 获得初始的pose，在初始的pose为起点产生轨迹
   if(get_initialpos){
@@ -122,6 +138,9 @@ void posCallback(const nav_msgs::Odometry::ConstPtr &msg){
   cur_pos(0) = msg->pose.pose.position.x;
   cur_pos(1) = msg->pose.pose.position.y;
   cur_pos(2) = msg->pose.pose.position.z;
+  cur_vel(0) = msg->twist.twist.linear.x;
+  cur_vel(1) = msg->twist.twist.linear.y;
+  cur_vel(2) = msg->twist.twist.linear.z;
   Eigen::Quaterniond q(msg->pose.pose.orientation.w, msg->pose.pose.orientation.x, msg->pose.pose.orientation.y, msg->pose.pose.orientation.z);
   cur_yaw = fromQuaternion2yaw(q);
   if(get_initialpos == false){
@@ -164,6 +183,7 @@ int main(int argc, char **argv)
   initial_pos_sub = nh.subscribe<nav_msgs::Odometry>("/vins_fusion/imu_propagate", 100, posCallback);
   pos_cmd_pub = nh.advertise<quadrotor_msgs::PositionCommand>("/position_cmd", 50);
   pub_des_path = nh.advertise<nav_msgs::Path>("des_path", 1000);
+  pub_groundtruth_path = nh.advertise<nav_msgs::Path>("groundtruth_path", 1000);
   ros::Duration(0.5).sleep();
   // Matrix<double, 3, 3> waypoints;
   // waypoints << 0, 0, 0,\

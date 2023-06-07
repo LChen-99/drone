@@ -19,7 +19,7 @@ public:
             
         }else{
             std::cout << "open file" << std::endl;
-            outfile << "t,pos,vel,des_pos,des_vel" << std::endl;
+            outfile << "t,p,v,p_des,v_des" << std::endl;
         }
     }
     void write(uint64_t t, Eigen::Vector3d& pos, Eigen::Vector3d& vel, Eigen::Vector3d& des_pos, Eigen::Vector3d& des_vel){

@@ -121,6 +121,7 @@ public:
 	double fromQuaternion2yaw(Eigen::Quaterniond q);
   Vector3d disturbance_obs;
   Vector3d disturbance_mea;
+  KalmanAdaptive* Kalman;
 private:
 };
 
@@ -162,10 +163,10 @@ class Neural_Fly_Control : public Controller
 public:
   Neural_Fly_Control(Parameter_t& param) : Controller(param){
 	  model_ = new NetworkModel(param.model_path);
-    Kalman = new KalmanAdaptive(0.01);
+    Kalman = new KalmanAdaptive(0.02, param);
     prev_vel = Vector3d(0, 0, 0);
     binit_ = false;
-    prev_t = -1;
+    prev_t = -1.0;
   }
   quadrotor_msgs::Px4ctrlDebug calculateControl(const Desired_State_t &des,
       const Odom_Data_t &odom,
@@ -184,7 +185,7 @@ public:
 private:
   double prev_t;
   Vector3d prev_vel;
-  KalmanAdaptive* Kalman;
+  
 	NetworkModel* model_;
 };
 #endif
