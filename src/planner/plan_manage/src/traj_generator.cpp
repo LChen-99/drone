@@ -39,15 +39,22 @@ double initial_yaw;
 Eigen::Vector3d cur_pos;
 Eigen::Vector3d cur_vel;
 double cur_yaw;
-TrajGenerator generator;
+TrajGenerator generator(0.02);
 void cmdCallback(const ros::TimerEvent &e)
 {
   /* no publishing before receive traj_ */
   if (!receive_traj_)
     return;
-
+  if(!get_initialpos){
+    return;
+  }
+  if(generator.traj_pos_.size() == 0){
+    times = 0;
+    generator.last_pos = cur_pos;
+    generator.RandomGenerator();
+    
+  }
   ros::Time time_now = ros::Time::now();
-  //double t_cur = (time_now - start_time_).toSec();
   Eigen::Vector3d pos(Eigen::Vector3d::Zero()), vel(Eigen::Vector3d::Zero()), acc(Eigen::Vector3d::Zero()), pos_f;
   std::pair<double, double> yaw_yawdot(0, 0);
   int points_size = generator.traj_pos_.size();
@@ -65,8 +72,8 @@ void cmdCallback(const ros::TimerEvent &e)
     pos = generator.traj_pos_[points_size - 1];
     vel.setZero();
     acc.setZero();
-    if(times - points_size > 30){
-      generator.last_pos = pos;
+    if(times - points_size > 100){
+      generator.last_pos = cur_pos;
       generator.RandomGenerator();
       // des_path.poses.clear();
       times = 0;
@@ -83,10 +90,12 @@ void cmdCallback(const ros::TimerEvent &e)
   cmd.header.frame_id = "world";
   cmd.trajectory_flag = quadrotor_msgs::PositionCommand::TRAJECTORY_STATUS_READY;
   cmd.trajectory_id = traj_id_;
-  cmd.position.x = pos(0) + initial_pos(0);
-  cmd.position.y = pos(1) + initial_pos(1);
-  cmd.position.z = pos(2) + initial_pos(2);
-
+  // cmd.position.x = pos(0) + initial_pos(0);
+  // cmd.position.y = pos(1) + initial_pos(1);
+  // cmd.position.z = pos(2) + initial_pos(2);
+  cmd.position.x = pos(0) ;
+  cmd.position.y = pos(1) ;
+  cmd.position.z = pos(2) ;
   cmd.velocity.x = vel(0);
   cmd.velocity.y = vel(1);
   cmd.velocity.z = vel(2);
@@ -101,9 +110,9 @@ void cmdCallback(const ros::TimerEvent &e)
   geometry_msgs::PoseStamped despose_stamped;
   despose_stamped.header = cmd.header;
   despose_stamped.header.frame_id = "map";
-  despose_stamped.pose.position.x = pos(0) + initial_pos(0);
-  despose_stamped.pose.position.y = pos(1) + initial_pos(1);
-  despose_stamped.pose.position.z = pos(2) + initial_pos(2);
+  despose_stamped.pose.position.x = pos(0);
+  despose_stamped.pose.position.y = pos(1);
+  despose_stamped.pose.position.z = pos(2);
   des_path.header = cmd.header;
   des_path.header.frame_id = "map";
   des_path.poses.push_back(despose_stamped);
@@ -148,8 +157,10 @@ void posCallback(const nav_msgs::Odometry::ConstPtr &msg){
     initial_pos(0) = msg->pose.pose.position.x;
     initial_pos(1) = msg->pose.pose.position.y;
     initial_pos(2) = msg->pose.pose.position.z;
+    generator.initial_pos = initial_pos;
     initial_q = q;
     initial_yaw = fromQuaternion2yaw(q);
+    generator.initial_yaw = initial_yaw;
     get_initialpos = true;
     
   }
@@ -190,7 +201,7 @@ int main(int argc, char **argv)
   //              1, 0, 1,\
   //              2, 1, 2;
   // generator.Generator(waypoints.transpose());
-  generator.RandomGenerator();
+  // generator.RandomGenerator();
  
   ros::Timer cmd_timer = nh.createTimer(ros::Duration(T), cmdCallback);
 

@@ -18,7 +18,7 @@ Traj TrajGenerator::Generator(const MatrixXd& waypoints){
     traj_time_.resize(n);
     traj_time_[0] = 0;
     for(int i = 1; i < n; i++){
-        traj_time_[i] = d0(i - 1) / 2.5;
+        traj_time_[i] = d0(i - 1) / 2;
     }
     std::vector<Eigen::MatrixXd> Polynomial_coefficients;
     Polynomial_coefficients.push_back(CalcuCoef(waypoints.row(0)));
@@ -41,8 +41,20 @@ Traj TrajGenerator::Generator(const MatrixXd& waypoints){
 void TrajGenerator::RandomGenerator(){
     srand(unsigned(time(NULL)));
     cout << "generator point randomly" << endl;
-    Eigen::Matrix3d waypoints = Eigen::Matrix3d::Random() * 3;
-    waypoints.block<3, 1>(0, 0) = last_pos;
+    Eigen::Matrix3d waypoints = Eigen::Matrix3d::Random() * 1.5;
+    // y轴范围拉长
+    waypoints.row(1) =  waypoints.row(1) * 2;
+    Vector3d PO = initial_pos - last_pos;
+    Vector3d PA = PO + waypoints.col(1);
+    Vector3d PB = PO + waypoints.col(2);
+    
+    waypoints.col(0) = last_pos;
+    waypoints.col(1) = last_pos + PA;
+    waypoints.col(2) = last_pos + PB;
+    cout << "initial_pos = " << initial_pos.transpose() << endl;
+    cout << "last_pos = " << waypoints.col(0).transpose() << endl;
+    cout << "A = " << waypoints.col(1).transpose() << endl;
+    cout << "B = " << waypoints.col(2).transpose() << endl;
     Traj traj_ = Generator(waypoints);
     traj_pos_ = traj_.pos;
     traj_vel_ = traj_.vel;

@@ -98,7 +98,9 @@ public:
 		<< controller->Kalman->get_a()(6) <<  "," << controller->Kalman->get_a()(7) <<  "," << controller->Kalman->get_a()(8) <<  "]\",";
 		collector.outfile << "\"[" << controller->disturbance_obs(0) << "," << controller->disturbance_obs(1) << "," << controller->disturbance_obs(2) << "]\",";
 		collector.outfile << "\"[" << controller->disturbance_mea(0) << "," << controller->disturbance_mea(1) << "," << controller->disturbance_mea(2) << "]\",";
-		collector.outfile  << u.thrust << "," << controller->thr2acc_  << "," << bat_data.volt << "," << bat_data.percentage << std::endl;
+		collector.outfile << u.thrust << ",";
+		collector.outfile << "\"[" << u.q.w() << "," << u.q.x() << "," << u.q.y() << "," << u.q.z() << "]\",";
+		collector.outfile << controller->thr2acc_  << "," << bat_data.volt << "," << bat_data.percentage << std::endl;
 
 	}
 private:

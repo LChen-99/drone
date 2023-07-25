@@ -21,7 +21,7 @@ auto_takeoff_land:
     enable: true
     enable_auto_arm: true
     no_RC: true
-    takeoff_height: 2.3 # m
+    takeoff_height: 5 # m
     takeoff_land_speed: 0.5 # m/s
 
 thrust_model: # The model that maps thrust signal u(0~1) to real thrust force F(Unit:N): F=K1*Voltage^K2*(K3*u^2+(1-K3)*u). 
@@ -38,10 +38,10 @@ gain:
     # Cascade PID controller. Recommend to read the code.
     Kp0: 4
     Kp1: 4
-    Kp2: 6
+    Kp2: 5
     Kv0: 2.7
     Kv1: 2.7
-    Kv2: 5
+    Kv2: 3
     # ↓↓↓ No use now --
     Kvi0: 0.0
     Kvi1: 0.0
@@ -68,9 +68,9 @@ msg_timeout:
     bat:  0.5
 
 disturbance_obs:
-    constant: true # net output set to constant
+    constant: false # net output set to constant
     use: false     # use in controller
-    R: 15.0             
+    R: 40.0             
     Q: 1.0
     P: 2.0
     lamda: 0.05

@@ -34,7 +34,7 @@ add_executable(landing_node
 )
 
 add_executable(pub_pose 
-  src/publish_tag_pose.cpp
+  src/publish_tagpoint.cpp
 )
 
 target_link_libraries(landing_node

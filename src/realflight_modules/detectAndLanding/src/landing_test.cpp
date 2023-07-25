@@ -14,7 +14,7 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "detect_landing");
     ros::NodeHandle n("~");
     // ros::Subscriber sub_tag = ros::Subscriber();
-    // ros::Publisher pub_tag_waypoint = n.advertise<geometry_msgs::PoseStamped>("/tag_goal", 10);
+    ros::Publisher pub_tag_waypoint = n.advertise<geometry_msgs::PoseStamped>("/tag_goal", 10);
     tf2_ros::Buffer buffer;
     tf2_ros::TransformListener listener(buffer);
     ros::Rate r(10);
@@ -37,7 +37,8 @@ int main(int argc, char **argv)
             position = (position * times + Eigen::Vector3d(pose.transform.translation.x, pose.transform.translation.y, pose.transform.translation.z)) / (times + 1);
             // q += Eigen::Quaterniond(pose.transform.rotation.w, pose.transform.rotation.x, pose.transform.rotation.y, pose.transform.rotation.z);
             times++;
-            if((last_position - position).norm() < 0.04){
+            r.sleep();
+            if((last_position - position).norm() < 0.01){
                 pose.header.stamp = ros::Time();
                 pose.header.frame_id = "world";
                 tag_pose.pose.orientation = pose.transform.rotation;
@@ -45,7 +46,8 @@ int main(int argc, char **argv)
                 tag_pose.pose.position.y = pose.transform.translation.y;
                 tag_pose.pose.position.z = pose.transform.translation.z;
                 ROS_INFO("tag_0:(%.2f,%.2f,%.2f)",tag_pose.pose.position.x,tag_pose.pose.position.y,tag_pose.pose.position.z);
-                // pub_tag_waypoint.publish(tag_pose);
+                ros::spinOnce();
+                pub_tag_waypoint.publish(tag_pose);
                 break;
             }
            
@@ -53,13 +55,14 @@ int main(int argc, char **argv)
             
             // break;
         }
+
         catch(const std::exception& e)
         {
             // std::cerr << e.what() << '\n';
             ROS_INFO(":%s",e.what());
         }
-        r.sleep();  
-        ros::spinOnce();
+        
+        
     }
     return 0;
 }

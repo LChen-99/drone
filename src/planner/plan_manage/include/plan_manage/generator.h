@@ -14,7 +14,9 @@ struct Traj{
 
 class TrajGenerator{
 public:
-    TrajGenerator(double T = 0.01) : T_(T){}
+    TrajGenerator(double T = 0.01) : T_(T){
+        
+    }
     Traj Generator(const MatrixXd& waypoints);
     MatrixXd CalcuCoef(const MatrixXd& waypoints);
     MatrixXd GetMatrixLine(int piecewise_th, int order, double t);
@@ -25,6 +27,8 @@ public:
     vector<Vector3d> traj_vel_;
     vector<Vector3d> traj_acc_;
     vector<double> traj_time_;
+    Eigen::Vector3d initial_pos;
+    double initial_yaw;
     Vector3d last_pos;
     double T_;
 };
