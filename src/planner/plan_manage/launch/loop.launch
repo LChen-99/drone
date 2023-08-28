@@ -4,6 +4,11 @@
     <node pkg="planner" name="traj_loop" type="traj_loop" output="screen">
         <!-- <remap from="position_cmd" to="/setpoints_cmd"/> -->
         <remap from="/vins_fusion/imu_propagate" to="/iris_0/mavros/vision_pose/odom"/>
-   
+        <param name="r" value="1" />
+        <param name="t" value="5" />
+        <!-- <param name="map/z_size" value="3" />
+        <param name="map/resolution" value="0.1"/>
+        <param name="ObstacleShape/seed" value="1"/>
+         -->
     </node>
 </launch>

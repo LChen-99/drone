@@ -174,7 +174,10 @@ int main(int argc, char **argv)
   ros::init(argc, argv, "traj_generator");
   // ros::NodeHandle node;
   ros::NodeHandle nh("~");
-  
+  double r;
+  double t;
+  nh.param("r", r, 1.0);
+  nh.param("t", t, 5.0);
   initial_pos_sub = nh.subscribe<nav_msgs::Odometry>("/vins_fusion/imu_propagate", 100, posCallback);
   pos_cmd_pub = nh.advertise<quadrotor_msgs::PositionCommand>("/position_cmd", 50);
   pub_des_path = nh.advertise<nav_msgs::Path>("des_path", 1000);
@@ -186,7 +189,7 @@ int main(int argc, char **argv)
   //              2, 1, 2;
   // generator.Generator(waypoints.transpose());
   //generator.RandomGenerator();
-  generator.circle_generate(5, 2);
+  generator.circle_generate(t, r);
   ros::Timer cmd_timer = nh.createTimer(ros::Duration(T), cmdCallback);
 
   /* control parameter */

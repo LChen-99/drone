@@ -1,5 +1,5 @@
 #include "controller.h"
-
+#include "tic_toc.h"
 using namespace std;
 
 
@@ -31,7 +31,7 @@ Controller::calculateControl(const Desired_State_t &des,
 {
   /* WRITE YOUR CODE HERE */
 	// 计算网络输出
-    
+    TicToc calcu;
       //compute disired acceleration
       
       Eigen::Vector3d des_acc(0.0, 0.0, 0.0);
@@ -59,7 +59,8 @@ Controller::calculateControl(const Desired_State_t &des,
       // /vins_fusion/imu_propagate 和 /mavros/imu/data 的坐标系定义不同，
       //  Rw1_imu * Rimu_w2 * Rw2_des = Rw1_des
       u.q = imu.q * odom.q.inverse() * q;
-
+    //   TicToc calcu;
+    // ROS_INFO("calcu time: %f\n", calcu.toc());
 
   /* WRITE YOUR CODE HERE */
 
@@ -333,6 +334,8 @@ Neural_Fly_Control::calculateControl(const Desired_State_t &des,
   /* WRITE YOUR CODE HERE */
       //compute disired acceleration
       //计算网络输出
+  TicToc calcu;
+  
 	Odom_Data_t cur = odom; 
 	Eigen::Vector3d des_acc(0.0, 0.0, 0.0);
   Eigen::Vector3d Kp,Kv;
@@ -462,6 +465,7 @@ Neural_Fly_Control::calculateControl(const Desired_State_t &des,
   {
     timed_thrust_.pop();
   }
+  ROS_INFO("calcu time: %f\n", calcu.toc());
   return debug_msg_;
 }
 

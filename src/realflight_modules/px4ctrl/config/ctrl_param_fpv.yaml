@@ -10,7 +10,7 @@ use_bodyrate_ctrl: false
 max_manual_vel: 1
 max_angle: 30  # Attitude angle limit in degree. A negative value means no limit.
 low_voltage: 13.2 # 4S battery
-body_T_cam: "/home/luochen/drone-project/drone-project/src/realflight_modules/px4ctrl/config/body_T_cam0.yaml"
+body_T_cam: "body_T_cam0.yaml"
 rc_reverse: # *
     roll: false
     pitch: false
