@@ -42,7 +42,14 @@ int main(int argc, char *argv[])
                                          boost::bind(&Odom_Data_t::feed, &fsm.odom_data, _1),
                                          ros::VoidConstPtr(),
                                          ros::TransportHints().tcpNoDelay());
-
+                                        
+    ros::Subscriber mark_sub =
+        nh.subscribe<geometry_msgs::PoseWithCovarianceStamped>("/tag_pose",
+                                         100,
+                                         boost::bind(&Mark_Data_t::feed, &fsm.mark_data, _1, param.T, &fsm.odom_data),
+                                         ros::VoidConstPtr(),
+                                         ros::TransportHints().tcpNoDelay());
+    // /tag_pose
     ros::Subscriber cmd_sub =
         nh.subscribe<quadrotor_msgs::PositionCommand>("cmd",
                                                       100,
@@ -87,7 +94,7 @@ int main(int argc, char *argv[])
 
     fsm.ctrl_FCU_pub = nh.advertise<mavros_msgs::AttitudeTarget>(prefix + "/mavros/setpoint_raw/attitude", 10);
     fsm.traj_start_trigger_pub = nh.advertise<geometry_msgs::PoseStamped>("/traj_start_trigger", 10);
-
+    fsm.mark_pose_pub = nh.advertise<geometry_msgs::PoseStamped>("/estimated_markpose", 10);
     fsm.debug_pub = nh.advertise<quadrotor_msgs::Px4ctrlDebug>("/debugPx4ctrl", 10); // debug
     fsm.collect_trigger = nh.advertiseService<std_srvs::Trigger::Request, std_srvs::Trigger::Response>("/collect_trigger", boost::bind(&PX4CtrlFSM::doCollectReq, &fsm, _1, _2)); 
     fsm.set_FCU_mode_srv = nh.serviceClient<mavros_msgs::SetMode>(prefix + "/mavros/set_mode");

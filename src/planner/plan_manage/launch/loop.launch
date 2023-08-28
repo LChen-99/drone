@@ -1,0 +1,9 @@
+<launch>
+
+    <!-- trajectory server -->
+    <node pkg="planner" name="traj_loop" type="traj_loop" output="screen">
+        <!-- <remap from="position_cmd" to="/setpoints_cmd"/> -->
+        <remap from="/vins_fusion/imu_propagate" to="/iris_0/mavros/vision_pose/odom"/>
+   
+    </node>
+</launch>

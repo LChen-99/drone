@@ -33,6 +33,7 @@ void Parameter_t::config_from_ros_handle(const ros::NodeHandle &nh)
 	read_essential_param(nh, "msg_timeout/imu", msg_timeout.imu);
 	read_essential_param(nh, "msg_timeout/bat", msg_timeout.bat);
 
+	
 	read_essential_param(nh, "pose_solver", pose_solver);
 	read_essential_param(nh, "mass", mass);
 	read_essential_param(nh, "gra", gra);
@@ -47,11 +48,13 @@ void Parameter_t::config_from_ros_handle(const ros::NodeHandle &nh)
 	read_essential_param(nh, "rc_reverse/yaw", rc_reverse.yaw);
 	read_essential_param(nh, "rc_reverse/throttle", rc_reverse.throttle);
 
+	read_essential_param(nh, "auto_takeoff_land/land_on_target", takeoff_land.land_on_target);
 	read_essential_param(nh, "auto_takeoff_land/enable", takeoff_land.enable);
     read_essential_param(nh, "auto_takeoff_land/enable_auto_arm", takeoff_land.enable_auto_arm);
     read_essential_param(nh, "auto_takeoff_land/no_RC", takeoff_land.no_RC);
 	read_essential_param(nh, "auto_takeoff_land/takeoff_height", takeoff_land.height);
 	read_essential_param(nh, "auto_takeoff_land/takeoff_land_speed", takeoff_land.speed);
+	read_essential_param(nh, "auto_takeoff_land/fly_speed", takeoff_land.fly_speed);
 
 	read_essential_param(nh, "thrust_model/print_value", thr_map.print_val);
 	read_essential_param(nh, "thrust_model/K1", thr_map.K1);
@@ -66,8 +69,10 @@ void Parameter_t::config_from_ros_handle(const ros::NodeHandle &nh)
 	read_essential_param(nh, "disturbance_obs/Q", disturbance_obs.Q);
 	read_essential_param(nh, "disturbance_obs/lamda", disturbance_obs.lamda);
 	read_essential_param(nh, "disturbance_obs/P", disturbance_obs.P);
+	read_essential_param(nh, "body_T_cam", body_T_cam);
 	max_angle /= (180.0 / M_PI);
-
+	readParameters(body_T_cam, T);
+	
 	if ( takeoff_land.enable_auto_arm && !takeoff_land.enable )
 	{
 		takeoff_land.enable_auto_arm = false;

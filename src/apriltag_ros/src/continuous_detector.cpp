@@ -30,7 +30,7 @@
  */
 
 #include "apriltag_ros/continuous_detector.h"
-
+#include "apriltag_ros/AprilTagDetectionArray.h"
 #include <pluginlib/class_list_macros.h>
 
 PLUGINLIB_EXPORT_CLASS(apriltag_ros::ContinuousDetector, nodelet::Nodelet);
@@ -58,6 +58,9 @@ void ContinuousDetector::onInit ()
                           &ContinuousDetector::imageCallback, this);
   tag_detections_publisher_ =
       nh.advertise<AprilTagDetectionArray>("tag_detections", 1);
+  tag_pose_publisher_ =
+      nh.advertise<geometry_msgs::PoseWithCovarianceStamped>("/tag_pose", 1);
+      // geometry_msgs::PoseWithCovarianceStamped tag_pose
   //std::cout << "Oninit" << std::endl;
   if (draw_tag_detections_image_)
   {
@@ -84,8 +87,17 @@ void ContinuousDetector::imageCallback (
   }
 
   // Publish detected tags in the image by AprilTag 2
-  tag_detections_publisher_.publish(
-      tag_detector_->detectTags(cv_image_,camera_info));
+  AprilTagDetectionArray tagarray = tag_detector_->detectTags(cv_image_,camera_info);
+  std::cout << "tagarray size = " << tagarray.detections.size() << std::endl;
+  // for(int i = 0; i < 4; i++){
+  //   std::cout << i << std::endl;
+  //   std::cout << tagarray.detections[i].pose.pose.pose.position << std::endl;
+  // }
+  if(tagarray.detections.size() > 0){
+    tag_pose_publisher_.publish(tagarray.detections[0].pose);
+  }
+  
+  tag_detections_publisher_.publish(tagarray);
 
   // Publish the camera image overlaid by outlines of the detected tags and
   // their payload values

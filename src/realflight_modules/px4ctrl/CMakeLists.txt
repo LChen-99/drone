@@ -22,6 +22,8 @@ find_package(Torch REQUIRED)
 MESSAGE("TORCH_LIBRARIES = " ${TORCH_LIBRARIES})
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 find_package(Eigen3 REQUIRED) 
+find_package(OpenCV 4 REQUIRED)
+
 
 catkin_package(
 )
@@ -52,6 +54,7 @@ add_dependencies(px4ctrl_node quadrotor_msgs)
 target_link_libraries(px4ctrl_node
   ${catkin_LIBRARIES}
   ${TORCH_LIBRARIES}
+  ${OpenCV_LIBS}
 )
 target_link_libraries(test_torch
   ${catkin_LIBRARIES}

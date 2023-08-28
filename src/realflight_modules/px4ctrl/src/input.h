@@ -14,6 +14,7 @@
 #include <sensor_msgs/BatteryState.h>
 #include <uav_utils/utils.h>
 #include "PX4CtrlParam.h"
+#include <geometry_msgs/PoseWithCovarianceStamped.h>
 
 class RC_Data_t
 {
@@ -66,7 +67,20 @@ public:
   Odom_Data_t();
   void feed(nav_msgs::OdometryConstPtr pMsg);
 };
-
+// apriltag 
+class Mark_Data_t
+{
+public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  Eigen::Vector3d p;
+  Eigen::Quaterniond q;
+  unsigned int times;
+  ros::Time rcv_stamp;
+  bool recv_new_msg;
+  int n;
+  Mark_Data_t();
+  void feed(geometry_msgs::PoseWithCovarianceStampedConstPtr pMsg, const Eigen::Matrix4d& odom_T_cam, const Odom_Data_t* odom_data);
+};
 
 class Pwm_Data_t
 {

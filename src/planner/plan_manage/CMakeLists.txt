@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(ego_planner)
+project(planner)
 
 set(CMAKE_BUILD_TYPE "Release")
 #ADD_COMPILE_OPTIONS(-std=c++11 )

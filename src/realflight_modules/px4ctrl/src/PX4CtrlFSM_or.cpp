@@ -330,7 +330,7 @@ void PX4CtrlFSM::process()
 	{
 		publish_attitude_ctrl(u, now_time);
 	}
-
+	publish_markpose(now_time);
 	// STEP5: Detect if the drone has landed
 	land_detector(state, des, odom_data);
 	// cout << takeoff_land.landed << " ";
@@ -499,7 +499,7 @@ void PX4CtrlFSM::set_start_pose_for_takeoff_land(const Odom_Data_t &odom)
 {
 	takeoff_land.start_pose.head<3>() = odom_data.p;
 	takeoff_land.start_pose(3) = get_yaw_from_quaternion(odom_data.q);
-
+	takeoff_land.des_pose = takeoff_land.start_pose;
 	takeoff_land.toggle_takeoff_land_time = ros::Time::now();
 }
 

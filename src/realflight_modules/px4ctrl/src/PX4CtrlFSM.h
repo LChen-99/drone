@@ -23,7 +23,7 @@ struct AutoTakeoffLand_t
 	ros::Time toggle_takeoff_land_time;
 	std::pair<bool, ros::Time> delay_trigger{std::pair<bool, ros::Time>(false, ros::Time(0))};
 	Eigen::Vector4d start_pose;
-	
+	Eigen::Vector4d des_pose;
 	static constexpr double MOTORS_SPEEDUP_TIME = 3.0; // motors idle running for 3 seconds before takeoff
 	static constexpr double DELAY_TRIGGER_TIME = 2.0;  // Time to be delayed when reach at target height
 };
@@ -37,6 +37,7 @@ public:
 	State_Data_t state_data;
 	ExtendedState_Data_t extended_state_data;
 	Odom_Data_t odom_data;
+	Mark_Data_t mark_data;
 	Imu_Data_t imu_data;
 	Pwm_Data_t pwm_data;
 	Command_Data_t cmd_data;
@@ -48,6 +49,7 @@ public:
 	//LinearControl controller_1;
 	Collector collector;
 	ros::Publisher traj_start_trigger_pub;
+	ros::Publisher mark_pose_pub;
 	ros::Publisher ctrl_FCU_pub;
 	ros::Publisher debug_pub; //debug
 	ros::ServiceClient set_FCU_mode_srv;
@@ -55,7 +57,7 @@ public:
 	ros::ServiceClient reboot_FCU_srv;
 	ros::ServiceServer collect_trigger;
 	quadrotor_msgs::Px4ctrlDebug debug_msg; //debug
-
+	bool landing;
 	Eigen::Vector4d hover_pose;
 	ros::Time last_set_hover_pose_time;
 
@@ -117,15 +119,15 @@ private:
 	void set_start_pose_for_takeoff_land(const Odom_Data_t &odom);
 	Desired_State_t get_rotor_speed_up_des(const ros::Time now);
 	Desired_State_t get_takeoff_land_des(const double speed);
-
+	Desired_State_t get_land_mark_des(const double speed,  const double land_speed);
 	// ---- tools ----
 	void set_hov_with_odom();
 	void set_hov_with_rc();
-
+	bool find_target();
 	bool toggle_offboard_mode(bool on_off); // It will only try to toggle once, so not blocked.
 	bool toggle_arm_disarm(bool arm); // It will only try to toggle once, so not blocked.
 	void reboot_FCU();
-	
+	void publish_markpose(const ros::Time &stamp);
 	void publish_bodyrate_ctrl(const Controller_Output_t &u, const ros::Time &stamp);
 	void publish_attitude_ctrl(const Controller_Output_t &u, const ros::Time &stamp);
 	void publish_trigger(const nav_msgs::Odometry &odom_msg);

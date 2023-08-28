@@ -1,0 +1,12 @@
+<launch>
+    <!-- number of moving objects -->
+    <arg name="obj_num" value="10" />
+    <arg name="drone_id" value="0"/>
+    <!-- trajectory server -->
+    <node pkg="planner" name="drone_$(arg drone_id)_traj_generator" type="traj_generator" output="screen">
+        <!-- <remap from="position_cmd" to="/setpoints_cmd"/> -->
+        <remap from="/vins_fusion/imu_propagate" to="/iris_0/mavros/vision_pose/odom"/>
+        
+        
+    </node>
+</launch>

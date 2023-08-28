@@ -139,6 +139,48 @@ Odom_Data_t::Odom_Data_t()
     rcv_stamp = ros::Time(0);
     q.setIdentity();
     recv_new_msg = false;
+}; 
+Mark_Data_t::Mark_Data_t(){
+    rcv_stamp = ros::Time(0);
+    q.setIdentity();
+    p.setZero();
+    n = 0;
+    times = 0;
+    recv_new_msg = false;
+};
+
+void Mark_Data_t::feed(geometry_msgs::PoseWithCovarianceStampedConstPtr pMsg, const Eigen::Matrix4d& odom_T_cam, const Odom_Data_t* odom_data){
+    ros::Time now = ros::Time::now();
+    times++;
+    if(times % 10 == 1){
+        return;
+    } 
+    rcv_stamp = now;
+    n++;
+    
+    Eigen::Matrix4d w_T_odom = Eigen::Matrix4d::Identity();
+    w_T_odom.block<3, 3>(0, 0) = (*odom_data).q.matrix();
+    w_T_odom.block<3, 1>(0, 3) = (*odom_data).p;
+    // std::cout << w_T_odom << std::endl;
+    Eigen::Matrix4d w_T_cam = w_T_odom * odom_T_cam;
+    recv_new_msg = true;
+    if(n == 1) {
+        
+        p.x() = pMsg->pose.pose.position.x;
+        p.y() = pMsg->pose.pose.position.y;
+        p.z() = pMsg->pose.pose.position.z;
+        p =  w_T_cam.block<3,3>(0,0) * p + w_T_cam.block<3, 1>(0, 3);
+
+    }else{//均值滤波
+        Eigen::Vector3d mark_p;
+        mark_p.x() = pMsg->pose.pose.position.x;
+        mark_p.y() = pMsg->pose.pose.position.y;
+        mark_p.z() = pMsg->pose.pose.position.z;
+        mark_p = w_T_cam.block<3,3>(0,0) * mark_p + w_T_cam.block<3, 1>(0, 3);
+        p = p * n / (n + 1) + mark_p / (n + 1);
+    }
+    
+    // TODO更新mark位置
 };
 
 void Odom_Data_t::feed(nav_msgs::OdometryConstPtr pMsg)
@@ -316,7 +358,7 @@ Takeoff_Land_Data_t::Takeoff_Land_Data_t()
 
 void Takeoff_Land_Data_t::feed(quadrotor_msgs::TakeoffLandConstPtr pMsg)
 {
-
+    ROS_INFO("Takeoff_Land_Data_t::feed");
     msg = *pMsg;
     rcv_stamp = ros::Time::now();
 

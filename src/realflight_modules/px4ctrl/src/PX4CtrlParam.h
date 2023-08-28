@@ -3,6 +3,10 @@
 
 #include <ros/ros.h>
 #include <string>
+#include <Eigen/Dense>
+
+#include <opencv2/opencv.hpp>
+#include <opencv2/core/eigen.hpp>
 class Parameter_t
 {
 public:
@@ -53,11 +57,13 @@ public:
 
 	struct AutoTakeoffLand
 	{
+		bool land_on_target;
 		bool enable;
 		bool enable_auto_arm;
 		bool no_RC;
 		double height;
 		double speed;
+		double fly_speed;
 	};
 
 	struct DisturbanceObs{
@@ -69,7 +75,8 @@ public:
 		double lamda;
 		double P;
 	};
-
+	Eigen::Matrix4d T;
+	std::string body_T_cam;
 	Gain gain;
 	RotorDrag rt_drag;
 	MsgTimeout msg_timeout;
@@ -84,7 +91,7 @@ public:
 	double ctrl_freq_max;
 	double max_manual_vel;
 	double low_voltage;
-
+	
 	bool use_bodyrate_ctrl;
 	// bool print_dbg;
 
@@ -106,6 +113,25 @@ private:
 			ROS_BREAK();
 		}
 	};
+
+	
+
+	// config_file是输入，R和t是返回值
+	void readParameters(std::string config_file, Eigen::Matrix4d& T)
+	{
+		cv::FileStorage fsSettings(config_file, cv::FileStorage::READ);
+		if(!fsSettings.isOpened())
+		{
+			std::cerr << "ERROR: Wrong path to settings" << std::endl;
+		}
+		cv::Mat cv_T;
+        fsSettings["body_T_cam0"] >> cv_T;
+		
+        cv::cv2eigen(cv_T, T);
+		std::cout << T << std::endl;
+		fsSettings.release();
+	};
+
 };
 
 #endif

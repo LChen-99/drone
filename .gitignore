@@ -6,8 +6,8 @@
 *.csv
 # BlueJ files
 *.ctxt
-*.yaml
-*.xml
+
+
 *.json
 # Mobile Tools for Java (J2ME)
 */config/
@@ -17,7 +17,7 @@ vins_output/
 3rd_party/
 devel/
 .vscode/
-*.launch
+
 # *.yaml
 .mtj.tmp/# Package Files #
 *.jar

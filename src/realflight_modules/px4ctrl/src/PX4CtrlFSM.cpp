@@ -16,6 +16,7 @@ PX4CtrlFSM::PX4CtrlFSM(Parameter_t &param_) : param(param_) /*, thrust_curve(thr
 	controller = new Neural_Fly_Control(param_);
 	start_collecting_ = false;
 	hover_pose.setZero();
+	landing = false;
 }
 /* 
         Finite State Machine
@@ -176,6 +177,7 @@ void PX4CtrlFSM::process()
 		{
 
 			state = AUTO_LAND;
+			landing = false; // 控制降落在tag上的变量，false代表在平移阶段，true代表在降落阶段 
 			set_start_pose_for_takeoff_land(odom_data);
 
 			ROS_INFO("\033[32m[px4ctrl] AUTO_HOVER(L2) --> AUTO_LAND\033[32m");
@@ -273,7 +275,12 @@ void PX4CtrlFSM::process()
 		}
 		else if (!get_landed())
 		{
-			des = get_takeoff_land_des(-param.takeoff_land.speed);
+			if(find_target() && param.takeoff_land.land_on_target){
+				des = get_land_mark_des(param.takeoff_land.fly_speed, param.takeoff_land.speed);
+			}else{
+				des = get_takeoff_land_des(-param.takeoff_land.speed);
+			}
+			
 		}
 		else
 		{
@@ -349,6 +356,7 @@ void PX4CtrlFSM::process()
 	{
 		publish_attitude_ctrl(u, now_time);
 	}
+	publish_markpose(now_time);
 	// record states
 	if(start_collecting_){
 		TicToc tic;
@@ -488,6 +496,50 @@ Desired_State_t PX4CtrlFSM::get_takeoff_land_des(const double speed)
 	return des;
 }
 
+
+
+Desired_State_t PX4CtrlFSM::get_land_mark_des(const double speed, const double land_speed)
+{
+	ros::Time now = ros::Time::now();
+	Desired_State_t des;
+	
+	double delta_t = (now - takeoff_land.toggle_takeoff_land_time).toSec(); 
+	// takeoff_land.last_set_cmd_time = now;
+	double t = 1 / param.ctrl_freq_max;
+	// Eigen::Vector4d despose = takeoff_land.start_pose;
+	if((odom_data.p.head(2) - mark_data.p.head(2)).norm() < 0.05 || landing == true){
+		if(landing == false) landing = true;
+		des.p.head(2) = mark_data.p.head(2);
+		takeoff_land.des_pose[2] -= land_speed * t;
+		des.p[2] = takeoff_land.des_pose[2];
+		des.v = Eigen::Vector3d(0, 0, 0);
+		des.a = Eigen::Vector3d::Zero();
+		des.j = Eigen::Vector3d::Zero();
+		des.yaw = takeoff_land.start_pose(3);
+		des.yaw_rate = 0.0;
+	}
+	// takeoff_land.start_pose(2) += speed * delta_t;
+	else{
+		Eigen::Vector3d p;
+		Eigen::Vector2d line_velocity = (mark_data.p.head(2) - odom_data.p.head(2)) / (mark_data.p.head(2) - odom_data.p.head(2)).norm() * speed;
+		takeoff_land.des_pose.head(2) += line_velocity * t;
+		// p.head(2) = takeoff_land.start_pose.head(2) + line_velocity * delta_t;
+		p.head(2) = takeoff_land.des_pose.head(2);
+		p[2] = takeoff_land.start_pose[2];
+		
+		des.p = p;
+		des.v = Eigen::Vector3d(0, 0, 0);
+		des.v.head(2) = line_velocity;
+		des.a = Eigen::Vector3d::Zero();
+		des.j = Eigen::Vector3d::Zero();
+		des.yaw = takeoff_land.start_pose(3);
+		des.yaw_rate = 0.0;
+	}
+	
+
+	return des;
+}
+
 void PX4CtrlFSM::set_hov_with_odom()
 {
 	// ROS_INFO("hover_pose.x = %lf, hover_pose.y = %lf, hover_pose.z = %lf", odom_data.p(0), odom_data.p(1), odom_data.p(2));
@@ -529,7 +581,7 @@ void PX4CtrlFSM::set_start_pose_for_takeoff_land(const Odom_Data_t &odom)
 {
 	takeoff_land.start_pose.head<3>() = odom_data.p;
 	takeoff_land.start_pose(3) = get_yaw_from_quaternion(odom_data.q);
-
+	takeoff_land.des_pose = takeoff_land.start_pose;
 	takeoff_land.toggle_takeoff_land_time = ros::Time::now();
 }
 
@@ -568,7 +620,13 @@ bool PX4CtrlFSM::recv_new_odom()
 
 	return false;
 }
-
+bool PX4CtrlFSM::find_target()
+{
+	if(mark_data.recv_new_msg){
+		return true;
+	}
+	return false;
+}
 void PX4CtrlFSM::publish_bodyrate_ctrl(const Controller_Output_t &u, const ros::Time &stamp)
 {
 	mavros_msgs::AttitudeTarget msg;
@@ -616,7 +674,16 @@ void PX4CtrlFSM::publish_trigger(const nav_msgs::Odometry &odom_msg)
 
 	traj_start_trigger_pub.publish(msg);
 }
+void PX4CtrlFSM::publish_markpose(const ros::Time &stamp){
+	geometry_msgs::PoseStamped msg;
+	msg.header.frame_id = "world";
+	msg.header.stamp = stamp;
+	msg.pose.position.x = mark_data.p.x();
+	msg.pose.position.y = mark_data.p.y();
+	msg.pose.position.z = mark_data.p.z();
 
+	mark_pose_pub.publish(msg);
+}
 bool PX4CtrlFSM::toggle_offboard_mode(bool on_off)
 {
 	mavros_msgs::SetMode offb_set_mode;
