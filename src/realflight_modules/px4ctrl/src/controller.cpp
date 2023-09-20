@@ -224,8 +224,8 @@ Controller::estimateThrustModel(
     if(param.thr_map.print_val){
       tick++;
       if(tick % 100 == 0){
-        ROS_INFO("thr2acc = %6.3f", thr2acc_);
-        ROS_INFO("hover_percentage = %6.3f", param_.gra / thr2acc_);
+        ROS_DEBUG("thr2acc = %6.3f", thr2acc_);
+        ROS_DEBUG("hover_percentage = %6.3f", param_.gra / thr2acc_);
         
       }
       
@@ -332,33 +332,21 @@ Neural_Fly_Control::calculateControl(const Desired_State_t &des,
     Controller_Output_t &u)
 {
   /* WRITE YOUR CODE HERE */
-      //compute disired acceleration
-      //计算网络输出
+  
   TicToc calcu;
   
 	Odom_Data_t cur = odom; 
 	Eigen::Vector3d des_acc(0.0, 0.0, 0.0);
-  Eigen::Vector3d Kp,Kv;
+  Eigen::Vector3d Kp,Kv, Kvi;
   Kp << param_.gain.Kp0, param_.gain.Kp1, param_.gain.Kp2;
   Kv << param_.gain.Kv0, param_.gain.Kv1, param_.gain.Kv2;
-
-  des_acc = des.a + Kv.asDiagonal() * (des.v - cur.v) + Kp.asDiagonal() * (des.p - cur.p);
-
+  Kvi << param_.gain.Kvi0, param_.gain.Kvi1, param_.gain.Kvi2;
+  integral += 1.0 / param_.ctrl_freq_max * ((des.v - cur.v) + (des.p - cur.p));
+  des_acc = des.a + Kv.asDiagonal() * (des.v - cur.v) + Kp.asDiagonal() * (des.p - cur.p) + Kvi.asDiagonal() * integral;
+  ROS_DEBUG("des.v - cur.v: %f, %f, %f\n", (des.v.x() - cur.v.x()), (des.v.y() - cur.v.y()), (des.v.z() - cur.v.z()));
+  ROS_DEBUG("des.p - cur.p: %f, %f, %f\n", (des.p.x() - cur.p.x()), (des.p.y() - cur.p.y()), (des.p.z() - cur.p.z()));
   des_acc += Eigen::Vector3d(0,0,param_.gra);
 
-  
-	
-
-	
-	// Eigen::Vector3d des_acc(0.0, 0.0, 0.0);
-	// Eigen::Vector3d Kp,Kv;
-	// Kp << param_.gain.Kp0, param_.gain.Kp1, param_.gain.Kp2;
-	// Kv << param_.gain.Kv0, param_.gain.Kv1, param_.gain.Kv2;
-	
-	// des_acc = des.a + Kv.asDiagonal() * (des.v - cur.v) + Kp.asDiagonal() * (des.p - cur.p);
-	// des_acc += Eigen::Vector3d(0,0,param_.gra);
-	// // cout << "des_acc =" << des_acc << endl;
-	// // cout << "f =" << f << endl;
   if(param_.disturbance_obs.use && binit_){
     Vector3d f;
     if(!param_.disturbance_obs.constant){
@@ -393,10 +381,10 @@ Neural_Fly_Control::calculateControl(const Desired_State_t &des,
       f(0) = phi_output.transpose() * a.block<3, 1>(0, 0);
       f(1) = phi_output.transpose() * a.block<3, 1>(3, 0);
       f(2) = phi_output.transpose() * a.block<3, 1>(6, 0);
-      if(abs(f(2)) > 1.0){
-        f(2) = 1.0 * f(2) / abs(f(2));
-      }
-      // f(2) = 0;  
+      // if(abs(f(2)) > 1.0){
+      //   f(2) = 1.0 * f(2) / abs(f(2));
+      // }
+      f(2) = 0;  
       des_acc -= f; 
     }
     disturbance_obs = f;
@@ -404,15 +392,46 @@ Neural_Fly_Control::calculateControl(const Desired_State_t &des,
   }
   // std::cout << "des_acc = " << des_acc.transpose() << endl;
   // PID
+  if(0){
+    Eigen::Matrix3d rotation_q = cur.q.toRotationMatrix();
+    Eigen::Matrix3d rotation_des = Eigen::Matrix3d::Zero();
+    Eigen::Vector3d rotation_z = rotation_q.col(2);
+    Eigen::Vector3d zb_des, xc_des, yb_des, xb_des;
+    double acc_z = des_acc.dot(rotation_z);
+    Eigen::Vector3d acc(0, 0, acc_z);
+    
+    u.thrust = computeDesiredCollectiveThrustSignal(acc);  
+    zb_des = des_acc / des_acc.norm();
+    xc_des = {cos(des.yaw), sin(des.yaw), 0};
+    yb_des = zb_des.cross(xc_des) / zb_des.cross(xc_des).norm();
+    xb_des = yb_des.cross(zb_des);
+    xb_des = xb_des / xb_des.norm();
+    rotation_des.col(0) = xb_des;
+    rotation_des.col(1) = yb_des;
+    rotation_des.col(2) = zb_des;
+    Eigen::Quaterniond q_des(rotation_des);
+    u.q = imu.q * cur.q.inverse() * q_des;
+  }else{
+    u.thrust = computeDesiredCollectiveThrustSignal(des_acc);
+ 
+    double roll,pitch,yaw,yaw_imu;
+    double yaw_odom = fromQuaternion2yaw(cur.q);
+    double sin = std::sin(yaw_odom);
+    double cos = std::cos(yaw_odom);
+    roll = (des_acc(0) * sin - des_acc(1) * cos )/ param_.gra;
+    pitch = (des_acc(0) * cos + des_acc(1) * sin )/ param_.gra;
 
-  Eigen::Matrix3d rotation_q = cur.q.toRotationMatrix();
-  Eigen::Matrix3d rotation_des = Eigen::Matrix3d::Zero();
-  Eigen::Vector3d rotation_z = rotation_q.col(2);
-  Eigen::Vector3d zb_des, xc_des, yb_des, xb_des;
-  double acc_z = des_acc.dot(rotation_z);
-  Eigen::Vector3d acc(0, 0, acc_z);
-  
-  u.thrust = computeDesiredCollectiveThrustSignal(acc);
+    yaw_imu = fromQuaternion2yaw(imu.q);
+
+    Eigen::Quaterniond q = Eigen::AngleAxisd(des.yaw,Eigen::Vector3d::UnitZ())
+      * Eigen::AngleAxisd(pitch,Eigen::Vector3d::UnitY())
+      * Eigen::AngleAxisd(roll,Eigen::Vector3d::UnitX());
+    // /vins_fusion/imu_propagate 和 /mavros/imu/data 的坐标系定义不同，
+    //  Rw1_imu * Rimu_w2 * Rw2_des = Rw1_des
+    u.q = imu.q * cur.q.inverse() * q;
+  }
+
+
   // std::cout << "u.thrust = " << u.thrust << std::endl;
   // double roll,pitch,yaw,yaw_imu;
   // double yaw_odom = fromQuaternion2yaw(cur.q);
@@ -426,18 +445,6 @@ Neural_Fly_Control::calculateControl(const Desired_State_t &des,
   // Eigen::Quaterniond q = Eigen::AngleAxisd(des.yaw,Eigen::Vector3d::UnitZ())
   //   * Eigen::AngleAxisd(pitch,Eigen::Vector3d::UnitY())
   //   * Eigen::AngleAxisd(roll,Eigen::Vector3d::UnitX());
-  
-  zb_des = des_acc / des_acc.norm();
-  xc_des = {cos(des.yaw), sin(des.yaw), 0};
-  yb_des = zb_des.cross(xc_des) / zb_des.cross(xc_des).norm();
-  xb_des = yb_des.cross(zb_des);
-  xb_des = xb_des / xb_des.norm();
-  rotation_des.col(0) = xb_des;
-  rotation_des.col(1) = yb_des;
-  rotation_des.col(2) = zb_des;
-  Eigen::Quaterniond q_des(rotation_des);
-     
-  u.q = imu.q * cur.q.inverse() * q_des;
   // /vins_fusion/imu_propagate 和 /mavros/imu/data 的坐标系定义不同，
   //  Rw1_imu * Rimu_w2 * Rw2_des = Rw1_des
   // u.q = imu.q * cur.q.inverse() * q;
@@ -465,7 +472,7 @@ Neural_Fly_Control::calculateControl(const Desired_State_t &des,
   {
     timed_thrust_.pop();
   }
-  ROS_INFO("calcu time: %f\n", calcu.toc());
+  ROS_DEBUG("calcu time: %f\n", calcu.toc());
   return debug_msg_;
 }
 
@@ -524,7 +531,8 @@ void Neural_Fly_Control::updateAdapt(double t, const Desired_State_t &des,
 	f_(0) = phi_output.transpose() * a.block<3, 1>(0, 0);
 	f_(1) = phi_output.transpose() * a.block<3, 1>(3, 0);
 	f_(2) = phi_output.transpose() * a.block<3, 1>(6, 0);
-  if(!binit_ && (f_measurement - f_).norm() < 0.1){
+  prev_f_ = f_;
+  if(!binit_ && (prev_f_ - f_).norm() < 0.1){
 		binit_ = true;
     ROS_INFO("obs init!");
 	}

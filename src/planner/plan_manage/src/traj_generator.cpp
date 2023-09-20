@@ -200,8 +200,7 @@ int main(int argc, char **argv)
   // waypoints << 0, 0, 0,\
   //              1, 0, 1,\
   //              2, 1, 2;
-  // generator.Generator(waypoints.transpose());
-  // generator.RandomGenerator();
+
  
   ros::Timer cmd_timer = nh.createTimer(ros::Duration(T), cmdCallback);
 

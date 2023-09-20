@@ -21,7 +21,7 @@ public:
     MatrixXd CalcuCoef(const MatrixXd& waypoints);
     MatrixXd GetMatrixLine(int piecewise_th, int order, double t);
     vector<Vector3d> PolyFunc(double t,  std::vector<Eigen::MatrixXd>& Polynomial_coefficients);
-    void RandomGenerator();
+    void RandomGenerator(double range=1.5);
     void circle_generate(double traj_duration_, double r);
     vector<Vector3d> traj_pos_;
     vector<Vector3d> traj_vel_;

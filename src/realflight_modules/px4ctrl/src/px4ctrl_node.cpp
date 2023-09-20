@@ -16,7 +16,7 @@ int main(int argc, char *argv[])
 
     signal(SIGINT, mySigintHandler);
     ros::Duration(1.0).sleep();
-    
+    ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug);
     Parameter_t param;
     param.config_from_ros_handle(nh);
     std::string prefix = param.prefix;

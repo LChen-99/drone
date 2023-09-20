@@ -23,7 +23,7 @@ double traj_duration_ = 5;
 ros::Time start_time_;
 int traj_id_;
 int times = 0;
-double T = 0.01;
+double T = 0.02;
 // yaw control
 double last_yaw_, last_yaw_dot_;
 double time_forward_;
@@ -39,7 +39,7 @@ double initial_yaw;
 Eigen::Vector3d cur_pos;
 Eigen::Vector3d cur_vel;
 double cur_yaw;
-TrajGenerator generator;
+TrajGenerator generator(0.02);
 void cmdCallback(const ros::TimerEvent &e)
 {
   /* no publishing before receive traj_ */

@@ -183,9 +183,10 @@ public:
   bool binit_;
   
 private:
+  Vector3d integral = Vector3d::Zero();
   double prev_t;
   Vector3d prev_vel;
-  
+  Vector3d prev_f_;
 	NetworkModel* model_;
 };
 #endif
