@@ -149,7 +149,7 @@ Mark_Data_t::Mark_Data_t(){
     recv_new_msg = false;
 };
 
-void Mark_Data_t::feed(geometry_msgs::PoseWithCovarianceStampedConstPtr pMsg, const Eigen::Matrix4d& odom_T_cam, const Odom_Data_t* odom_data){
+void Mark_Data_t::feedTagCam(geometry_msgs::PoseWithCovarianceStampedConstPtr pMsg, const Eigen::Matrix4d& odom_T_cam, const Odom_Data_t* odom_data){
     ros::Time now = ros::Time::now();
     times++;
     if(times % 10 == 1){
@@ -179,8 +179,14 @@ void Mark_Data_t::feed(geometry_msgs::PoseWithCovarianceStampedConstPtr pMsg, co
         mark_p = w_T_cam.block<3,3>(0,0) * mark_p + w_T_cam.block<3, 1>(0, 3);
         p = p * n / (n + 1) + mark_p / (n + 1);
     }
-    
-    // TODO更新mark位置
+};
+
+void Mark_Data_t::feedTagWorld(geometry_msgs::PoseStampedConstPtr pMsg){
+    ros::Time now = ros::Time::now();
+    rcv_stamp = now;
+    p.x() = pMsg->pose.position.x;
+    p.y() = pMsg->pose.position.y;
+    p.z() = pMsg->pose.position.z;
 };
 
 void Odom_Data_t::feed(nav_msgs::OdometryConstPtr pMsg)

@@ -213,7 +213,7 @@ Controller::estimateThrustModel(
     timed_thrust_.pop();
     
     /***********************************/
-    /* Model: est_a(2) = thr1acc_ * thr */
+    /* Model: est_a(2) = thr1acc_ * thr*/
     /***********************************/
     // 悬停和静止时imu [0, 0, g]
     double gamma = 1 / (rho2_ + thr * P_ * thr);
@@ -283,7 +283,7 @@ SE3Controller::calculateControl(const Desired_State_t &des,
       rotation_des.col(1) = yb_des;
       rotation_des.col(2) = zb_des;
       Eigen::Quaterniond q_des(rotation_des);
-      ////到这
+      
       // /vins_fusion/imu_propagate 和 /mavros/imu/data 的坐标系定义不同，
       //  Rw1_imu * Rimu_w2 * Rw2_des = Rw1_des
       u.q = imu.q * cur.q.inverse() * q_des;
@@ -430,25 +430,6 @@ Neural_Fly_Control::calculateControl(const Desired_State_t &des,
     //  Rw1_imu * Rimu_w2 * Rw2_des = Rw1_des
     u.q = imu.q * cur.q.inverse() * q;
   }
-
-
-  // std::cout << "u.thrust = " << u.thrust << std::endl;
-  // double roll,pitch,yaw,yaw_imu;
-  // double yaw_odom = fromQuaternion2yaw(cur.q);
-  // double sin = std::sin(yaw_odom);
-  // double cos = std::cos(yaw_odom);
-  // roll = (des_acc(0) * sin - des_acc(1) * cos )/ param_.gra;
-  // pitch = (des_acc(0) * cos + des_acc(1) * sin )/ param_.gra;
-
-  // yaw_imu = fromQuaternion2yaw(imu.q);
-
-  // Eigen::Quaterniond q = Eigen::AngleAxisd(des.yaw,Eigen::Vector3d::UnitZ())
-  //   * Eigen::AngleAxisd(pitch,Eigen::Vector3d::UnitY())
-  //   * Eigen::AngleAxisd(roll,Eigen::Vector3d::UnitX());
-  // /vins_fusion/imu_propagate 和 /mavros/imu/data 的坐标系定义不同，
-  //  Rw1_imu * Rimu_w2 * Rw2_des = Rw1_des
-  // u.q = imu.q * cur.q.inverse() * q;
-
   /* WRITE YOUR CODE HERE */
 
   debug_msg_.des_v_x = des.v(0);

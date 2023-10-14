@@ -15,6 +15,7 @@
 #include <uav_utils/utils.h>
 #include "PX4CtrlParam.h"
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
+#include <geometry_msgs/PoseStamped.h>
 
 class RC_Data_t
 {
@@ -79,7 +80,9 @@ public:
   bool recv_new_msg;
   int n;
   Mark_Data_t();
-  void feed(geometry_msgs::PoseWithCovarianceStampedConstPtr pMsg, const Eigen::Matrix4d& odom_T_cam, const Odom_Data_t* odom_data);
+  void feedTagCam(geometry_msgs::PoseWithCovarianceStampedConstPtr pMsg, const Eigen::Matrix4d& odom_T_cam, const Odom_Data_t* odom_data);
+  void feedTagWorld(geometry_msgs::PoseStampedConstPtr pMsg);
+  
 };
 
 class Pwm_Data_t

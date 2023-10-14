@@ -151,7 +151,7 @@ vector<Vector3d> TrajGenerator::PolyFunc(double t, std::vector<Eigen::MatrixXd>&
     pva.push_back(a);
     return pva;
 }
-void TrajGenerator::circle_generate(double traj_duration_, double r){
+void TrajGenerator::circleGenerate(double traj_duration_, Eigen::Vector3d start_pos, double r){
   int sample_time = traj_duration_ / T_;
   double radius = r;
   
@@ -160,13 +160,32 @@ void TrajGenerator::circle_generate(double traj_duration_, double r){
   traj_acc_ = vector<Eigen::Vector3d>(sample_time, Eigen::Vector3d::Zero());
 
   for(int i = 0; i < sample_time; i++){
-    Eigen::Vector3d p(radius * cos((2 * M_PI / sample_time) * i + M_PI) + radius, radius * sin((2 * M_PI / sample_time) * i + M_PI), 0);
-    Eigen::Vector3d v(- radius * 2 * M_PI / traj_duration_ * sin((2 * M_PI / sample_time) * i + M_PI), radius * 2 * M_PI / traj_duration_  * cos((2 * M_PI / sample_time) * i + M_PI),  0);
+    Eigen::Vector3d p(start_pos.x() + radius * cos(T_ * i)  - radius, start_pos.y() + radius * sin(T_ * i), start_pos.z());
+    Eigen::Vector3d v(- radius * sin(T_ * i), radius * cos(T_ * i),  0);
     // Eigen::Vector3d a = Vector3d::Zero();
-    Eigen::Vector3d a( - radius * pow(2 * M_PI / traj_duration_ , 2)* cos((2 * M_PI / sample_time) * i + M_PI), -radius * pow(2 * M_PI / traj_duration_ , 2) * sin((2 * M_PI / sample_time) * i + M_PI), 0);
+    Eigen::Vector3d a( - radius * cos(T_ * i), -radius * sin(T_ * i), 0);
     traj_pos_[i] = p;
     traj_vel_[i] = v;
     traj_acc_[i] = a;
+  }
+  
+  
+}
+
+void TrajGenerator::eightGenerate(double traj_duration_, Eigen::Vector3d start_pos, double a, double b){
+  int sample_time = static_cast<int>(traj_duration_ / T_);
+  traj_pos_ = vector<Eigen::Vector3d>(2 * sample_time, Eigen::Vector3d::Zero());
+  traj_vel_ = vector<Eigen::Vector3d>(2 * sample_time, Eigen::Vector3d::Zero());
+  traj_acc_ = vector<Eigen::Vector3d>(2 * sample_time, Eigen::Vector3d::Zero());
+  // x = x_0 + asin(ct); a = 0.75
+  // z = z_0 + bsin(dt); b = 0.4
+  for(int i = 0; i < 2 * sample_time; i++){
+    Eigen::Vector3d pos(start_pos.x() + a * sin(T_ * i), start_pos.y(), start_pos.z() + b*sin(2 * T_ * i));
+    Eigen::Vector3d vel(a * cos(T_ * i), 0,  2 * b * cos(2 * T_ * i));
+    Eigen::Vector3d acc(-a * sin(T_ * i), 0, -4 * b * sin(2 * T_ * i));
+    traj_pos_[i] = pos;
+    traj_vel_[i] = vel;
+    traj_acc_[i] = acc;
   }
   
   

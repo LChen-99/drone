@@ -24,7 +24,7 @@ auto_takeoff_land:
     enable: true
     enable_auto_arm: true
     no_RC: true
-    takeoff_height: 5 # m
+    takeoff_height: 2 # m
     takeoff_land_speed: 0.3 # m/s
     fly_speed: 0.3 # m/s
 

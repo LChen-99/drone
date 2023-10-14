@@ -3,7 +3,7 @@
     <!-- trajectory server -->
     <node pkg="planner" name="traj_loop" type="traj_loop" output="screen">
         <!-- <remap from="position_cmd" to="/setpoints_cmd"/> -->
-        <remap from="~odom" to="/iris_0/mavros/vision_pose/odom"/>
+        <remap from="odom" to="/px4/vision_odom"/>
         <param name="r" value="1" />
         <param name="t" value="6.283185" />
         <param name="a" value="0.75" />
