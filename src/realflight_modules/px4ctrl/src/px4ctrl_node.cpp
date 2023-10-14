@@ -16,7 +16,7 @@ int main(int argc, char *argv[])
 
     signal(SIGINT, mySigintHandler);
     ros::Duration(1.0).sleep();
-    ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug);
+    ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Info);
     Parameter_t param;
     param.config_from_ros_handle(nh);
     std::string prefix = param.prefix;
@@ -42,14 +42,20 @@ int main(int argc, char *argv[])
                                          boost::bind(&Odom_Data_t::feed, &fsm.odom_data, _1),
                                          ros::VoidConstPtr(),
                                          ros::TransportHints().tcpNoDelay());
-                                        
+
     ros::Subscriber mark_sub =
         nh.subscribe<geometry_msgs::PoseWithCovarianceStamped>("/tag_pose",
                                          100,
-                                         boost::bind(&Mark_Data_t::feed, &fsm.mark_data, _1, param.T, &fsm.odom_data),
+                                         boost::bind(&Mark_Data_t::feedTagCam, &fsm.mark_data, _1, param.T, &fsm.odom_data),
                                          ros::VoidConstPtr(),
                                          ros::TransportHints().tcpNoDelay());
     // /tag_pose
+    ros::Subscriber mark_world_sub =
+        nh.subscribe<geometry_msgs::PoseStamped>("/tag_world",
+                                         100,
+                                         boost::bind(&Mark_Data_t::feedTagWorld, &fsm.mark_data, _1),
+                                         ros::VoidConstPtr(),
+                                         ros::TransportHints().tcpNoDelay());
     ros::Subscriber cmd_sub =
         nh.subscribe<quadrotor_msgs::PositionCommand>("cmd",
                                                       100,
@@ -140,6 +146,7 @@ int main(int argc, char *argv[])
         TicToc processtime;
         fsm.process(); // We DO NOT rely on feedback as trigger, since there is no significant performance difference through our test.
         ROS_DEBUG("process cost: %lf", processtime.toc());
+        
     }
 
     return 0;

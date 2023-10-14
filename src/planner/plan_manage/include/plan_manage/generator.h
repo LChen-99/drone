@@ -22,7 +22,8 @@ public:
     MatrixXd GetMatrixLine(int piecewise_th, int order, double t);
     vector<Vector3d> PolyFunc(double t,  std::vector<Eigen::MatrixXd>& Polynomial_coefficients);
     void RandomGenerator(double range=1.5);
-    void circle_generate(double traj_duration_, double r);
+    void circleGenerate(double traj_duration_, Eigen::Vector3d start_pos, double r);
+    void eightGenerate(double traj_duration_, Eigen::Vector3d start_pos, double a, double b);
     vector<Vector3d> traj_pos_;
     vector<Vector3d> traj_vel_;
     vector<Vector3d> traj_acc_;
