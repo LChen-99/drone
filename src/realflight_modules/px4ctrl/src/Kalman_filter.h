@@ -30,6 +30,7 @@ public:
         a = a_plus;
         K = K_temp;
     }
+    
     Matrix<double, 9, 1> get_a(){
         return a;
     }

@@ -122,6 +122,8 @@ private:
 		cv::FileStorage fsSettings(config_file, cv::FileStorage::READ);
 		if(!fsSettings.isOpened())
 		{
+
+			std::cout << config_file << std::endl;
 			std::cerr << "ERROR: Wrong path to settings" << std::endl;
 		}
 		cv::Mat cv_T;
