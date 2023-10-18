@@ -1,0 +1,6 @@
+<launch>
+
+	<node pkg="px4ctrl" type="neural_land_test.py" name="neural_land_test" output="screen">
+	</node>
+ 
+</launch>

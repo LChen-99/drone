@@ -31,7 +31,7 @@ vector<Eigen::Vector3d> traj_pos, traj_vel, traj_acc;
 
 nav_msgs::Path des_path;
 nav_msgs::Path groundtruth_path;
-Collector collector("/home/luochen/drone-project/drone-project/flylog/data.csv");
+Collector collector("/home/caia/lc_ws/fly_data/loop_data/data.csv");
 Eigen::Quaterniond initial_q;
 bool get_initialpos = false;
 Eigen::Vector3d initial_pos;
@@ -116,6 +116,7 @@ void cmdCallback(const ros::TimerEvent &e)
   last_yaw_ = cmd.yaw;
 
   if(get_initialpos){
+    ROS_INFO("pub cmd");
     times++;
     if(times == points_size) times = 0;
     pos_cmd_pub.publish(cmd);

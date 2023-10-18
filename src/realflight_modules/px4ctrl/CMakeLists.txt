@@ -66,3 +66,6 @@ target_link_libraries(test_torch
 catkin_install_python(PROGRAMS thrust_calibrate_scrips/thrust_calibrate.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
+catkin_install_python(PROGRAMS scripts/targetpub.py
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)

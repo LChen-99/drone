@@ -228,8 +228,6 @@ Controller::estimateThrustModel(
         ROS_DEBUG("hover_percentage = %6.3f", param_.gra / thr2acc_);
         
       }
-      
-      //printf("%6.3f,%6.3f,%6.3f,%6.3f\n", thr2acc_, gamma, K, P_);
     }
     // debug_msg_.thr2acc = thr2acc_;
     return true;

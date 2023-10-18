@@ -20,10 +20,6 @@ int main(int argc, char *argv[])
     Parameter_t param;
     param.config_from_ros_handle(nh);
     std::string prefix = param.prefix;
-    // Controller controller(param);
-    //LinearControl controller_1(param);
-    //NeuControl controller_2(param);
-    // PX4CtrlFSM fsm(param, controller_1, controller_2);
     PX4CtrlFSM fsm(param);
     fsm.collector = Collector(param.csv_filename);
     ros::Subscriber state_sub =
@@ -44,7 +40,7 @@ int main(int argc, char *argv[])
                                          ros::TransportHints().tcpNoDelay());
 
     ros::Subscriber mark_sub =
-        nh.subscribe<geometry_msgs::PoseWithCovarianceStamped>("/tag_pose",
+        nh.subscribe<geometry_msgs::PoseWithCovarianceStamped>("/tag_cam",
                                          100,
                                          boost::bind(&Mark_Data_t::feedTagCam, &fsm.mark_data, _1, param.T, &fsm.odom_data),
                                          ros::VoidConstPtr(),

@@ -21,8 +21,8 @@ auto_takeoff_land:
     land_on_target: false
     enable: true
     enable_auto_arm: true
-    no_RC: true
-    takeoff_height: 0.7 # m
+    no_RC: false
+    takeoff_height: 0.5 # m
     takeoff_land_speed: 0.3 # m/s
     fly_speed: 0.3 # m/s
 
@@ -34,7 +34,7 @@ thrust_model: # The model that maps thrust signal u(0~1) to real thrust force F(
     K2: 1.6942 # Needs precise calibration!
     K3: 0.6786 # Needs precise calibration! K3 equals THR_MDL_FAC in https://docs.px4.io/master/en/config_mc/pid_tuning_guide_multicopter.html.
     # approximate thrust mapping parameters
-    hover_percentage: 0.32  # Thrust percentage in Stabilize/Arco mode # *
+    hover_percentage: 0.33  # Thrust percentage in Stabilize/Arco mode # *
 
 gain: 
     # Cascade PID controller. Recommend to read the code.
@@ -70,7 +70,7 @@ msg_timeout:
     bat:  0.5
 
 disturbance_obs:
-    constant: false # net output set to constant
+    constant: true # net output set to constant
     use: false     # use in controller
     R: 40.0             
     Q: 1.0

@@ -23,29 +23,29 @@ image_height: 480
    
 
 # Extrinsic parameter between IMU and Camera.
-estimate_extrinsic: 1   # 0  Have an accurate extrinsic parameters. We will trust the following imu^R_cam, imu^T_cam, don't change it.
+estimate_extrinsic: 0   # 0  Have an accurate extrinsic parameters. We will trust the following imu^R_cam, imu^T_cam, don't change it.
                         # 1  Have an initial guess about extrinsic parameters. We will optimize around your initial guess.
 
 body_T_cam0: !!opencv-matrix
    rows: 4
    cols: 4
    dt: d
-   data: [ -3.0597105734350372e-02, -5.8927835241672222e-03,
-       9.9951442822153314e-01, 4.7302157421591003e-02,
-       -9.9953144626651957e-01, -6.5966180705800959e-04,
-       -3.0601515822914926e-02, 2.2936545354189812e-02,
-       8.3966960215681175e-04, -9.9998241981978753e-01,
-       -5.8698386963871307e-03, 6.1639590858913150e-02, 0., 0., 0., 1. ]
+   data: [ -2.8436592360613799e-02, 1.4230915904712321e-01,
+       9.8941369682565905e-01, 1.0195357632471586e-02,
+       -9.9959041494276835e-01, -7.2359975558311529e-03,
+       -2.7688313309345680e-02, -3.6259818649358004e-03,
+       3.2190945094499046e-03, -9.8979580903874953e-01,
+       1.4245663845488765e-01, 6.7722233885378930e-02, 0., 0., 0., 1. ]
 body_T_cam1: !!opencv-matrix
    rows: 4
    cols: 4
    dt: d
-   data: [ -3.0069515759978405e-02, -5.7183785193312686e-03,
-       9.9953145241611574e-01, 4.4848038940723180e-02,
-       -9.9954744323873768e-01, -6.8446400583832556e-04,
-       -3.0073912680706305e-02, -2.7107742793766636e-02,
-       8.5611731814771996e-04, -9.9998341569054738e-01,
-       -5.6952091272581828e-03, 6.1794907739113121e-02, 0., 0., 0., 1. ]
+   data: [ -2.8927379433040912e-02, 1.4152728661310621e-01,
+       9.8951161380908970e-01, 9.2106687782102115e-03,
+       -9.9957531644105180e-01, -7.5821334307992760e-03,
+       -2.8137128752047436e-02, -4.2933609587338953e-02,
+       3.5204376018648231e-03, -9.8990531789488323e-01,
+       1.4168651355200335e-01, 6.7684819292319981e-02, 0., 0., 0., 1. ]
 #Multiple thread support
 multiple_thread: 1
 
@@ -70,8 +70,8 @@ gyr_w: 0.0001       # gyroscope bias random work noise standard deviation.     #
 g_norm: 9.805         # gravity magnitude
 
 #unsynchronization parameters
-estimate_td: 1                      # online estimate time offset between camera and imu
-td: -0.05                             # initial value of time offset. unit: s. readed image clock + td = real image clock (IMU clock)
+estimate_td: 0                      # online estimate time offset between camera and imu
+td: -0.015                             # initial value of time offset. unit: s. readed image clock + td = real image clock (IMU clock)
 
 #loop closure parameters
 load_previous_pose_graph: 0        # load and reuse previous pose graph; load from 'pose_graph_save_path'

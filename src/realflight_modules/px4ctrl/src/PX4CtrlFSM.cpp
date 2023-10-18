@@ -157,6 +157,7 @@ void PX4CtrlFSM::process()
 
 	case AUTO_HOVER:
 	{
+		ROS_INFO("AUTO_HOVER");
 		if (!rc_data.is_hover_mode || !odom_is_received(now_time))
 		{
 			state = MANUAL_CTRL;
@@ -203,6 +204,7 @@ void PX4CtrlFSM::process()
 
 	case CMD_CTRL:
 	{
+		ROS_INFO("CMD_CTRL");
 		if (!rc_data.is_hover_mode || !odom_is_received(now_time))
 		{
 			state = MANUAL_CTRL;
@@ -557,7 +559,7 @@ void PX4CtrlFSM::set_hov_with_rc()
 	ros::Time now = ros::Time::now();
 	double delta_t = (now - last_set_hover_pose_time).toSec();
 	last_set_hover_pose_time = now;
-
+	std::cout << "hover_pose" << hover_pose << std::endl;
 	hover_pose(0) += rc_data.ch[1] * param.max_manual_vel * delta_t * (param.rc_reverse.pitch ? 1 : -1);
 	hover_pose(1) += rc_data.ch[0] * param.max_manual_vel * delta_t * (param.rc_reverse.roll ? 1 : -1);
 	hover_pose(2) += rc_data.ch[2] * param.max_manual_vel * delta_t * (param.rc_reverse.throttle ? 1 : -1);
