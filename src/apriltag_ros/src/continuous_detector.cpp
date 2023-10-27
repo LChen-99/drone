@@ -93,8 +93,13 @@ void ContinuousDetector::imageCallback (
   //   std::cout << i << std::endl;
   //   std::cout << tagarray.detections[i].pose.pose.pose.position << std::endl;
   // }
+  //改了
   if(tagarray.detections.size() > 0){
-    tag_pose_publisher_.publish(tagarray.detections[0].pose);
+    for(int i = 0; i < tagarray.detections.size(); i++){
+      if(tagarray.detections[i].id.size() == 1 && tagarray.detections[i].id[0] == 0){
+        tag_pose_publisher_.publish(tagarray.detections[i].pose);
+      }
+    }
   }
   
   tag_detections_publisher_.publish(tagarray);

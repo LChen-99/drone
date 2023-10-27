@@ -508,15 +508,31 @@ Desired_State_t PX4CtrlFSM::get_land_mark_des(const double speed, const double l
 	double t = 1 / param.ctrl_freq_max;
 	// Eigen::Vector4d despose = takeoff_land.start_pose;
 	if((odom_data.p.head(2) - mark_data.p.head(2)).norm() < 0.05 || landing == true){
-		if(landing == false) landing = true;
-		des.p.head(2) = mark_data.p.head(2);
-		takeoff_land.des_pose[2] -= land_speed * t;
-		des.p[2] = takeoff_land.des_pose[2];
-		des.v = Eigen::Vector3d(0, 0, 0);
-		des.a = Eigen::Vector3d::Zero();
-		des.j = Eigen::Vector3d::Zero();
-		des.yaw = takeoff_land.start_pose(3);
-		des.yaw_rate = 0.0;
+		if(landing == false) {
+			landing = true;
+			hover_times = 0;
+		}
+		hover_times++;
+		//先悬停
+		if(hover_times < 150){
+			des.p.head(2) = mark_data.p.head(2);
+			des.p[2] = odom_data.p[2];
+			takeoff_land.des_pose[2] = odom_data.p[2];
+			des.v = Eigen::Vector3d::Zero();
+			des.a = Eigen::Vector3d::Zero();
+			des.yaw = takeoff_land.start_pose(3);
+			des.yaw_rate = 0.0;
+		}else{
+			des.p.head(2) = mark_data.p.head(2);
+			takeoff_land.des_pose[2] -= land_speed * t;
+			des.p[2] = takeoff_land.des_pose[2];
+			des.v = Eigen::Vector3d(0, 0, land_speed);
+			des.a = Eigen::Vector3d::Zero();
+			des.j = Eigen::Vector3d::Zero();
+			des.yaw = takeoff_land.start_pose(3);
+			des.yaw_rate = 0.0;
+		}
+		
 	}
 	// takeoff_land.start_pose(2) += speed * delta_t;
 	else{

@@ -43,8 +43,6 @@ TrajGenerator generator(0.02);
 void cmdCallback(const ros::TimerEvent &e)
 {
   /* no publishing before receive traj_ */
-  if (!receive_traj_)
-    return;
   if(!get_initialpos){
     return;
   }
@@ -90,9 +88,6 @@ void cmdCallback(const ros::TimerEvent &e)
   cmd.header.frame_id = "world";
   cmd.trajectory_flag = quadrotor_msgs::PositionCommand::TRAJECTORY_STATUS_READY;
   cmd.trajectory_id = traj_id_;
-  // cmd.position.x = pos(0) + initial_pos(0);
-  // cmd.position.y = pos(1) + initial_pos(1);
-  // cmd.position.z = pos(2) + initial_pos(2);
   cmd.position.x = pos(0) ;
   cmd.position.y = pos(1) ;
   cmd.position.z = pos(2) ;
@@ -122,7 +117,6 @@ void cmdCallback(const ros::TimerEvent &e)
   groundtruth_stamped.header = cmd.header;
   groundtruth_stamped.header.frame_id = "map";
 
-  // collector.write(time_now.toNSec(), cur_pos, cur_vel, pos, vel);
   groundtruth_stamped.pose.position.x = cur_pos(0);
   groundtruth_stamped.pose.position.y = cur_pos(1);
   groundtruth_stamped.pose.position.z = cur_pos(2);
@@ -177,12 +171,6 @@ int main(int argc, char **argv)
   pub_des_path = nh.advertise<nav_msgs::Path>("des_path", 1000);
   pub_groundtruth_path = nh.advertise<nav_msgs::Path>("groundtruth_path", 1000);
   ros::Duration(0.5).sleep();
-  // Matrix<double, 3, 3> waypoints;
-  // waypoints << 0, 0, 0,\
-  //              1, 0, 1,\
-  //              2, 1, 2;
-
- 
   ros::Timer cmd_timer = nh.createTimer(ros::Duration(T), cmdCallback);
 
   /* control parameter */

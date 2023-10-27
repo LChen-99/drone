@@ -152,9 +152,7 @@ Mark_Data_t::Mark_Data_t(){
 void Mark_Data_t::feedTagCam(geometry_msgs::PoseWithCovarianceStampedConstPtr pMsg, const Eigen::Matrix4d& odom_T_cam, const Odom_Data_t* odom_data){
     ros::Time now = ros::Time::now();
     times++;
-    if(times % 10 == 1){
-        return;
-    } 
+    
     rcv_stamp = now;
     n++;
     

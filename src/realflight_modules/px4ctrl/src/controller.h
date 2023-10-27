@@ -107,7 +107,8 @@ public:
 	quadrotor_msgs::Px4ctrlDebug debug_msg_;
 	static double thr2acc_;
 	static double P_;
-
+  Vector3d f;
+  Vector3d integral;
 	
 	
 	std::queue<std::pair<ros::Time, double>> timed_thrust_;
@@ -166,7 +167,9 @@ public:
     Kalman = new KalmanAdaptive(0.02, param);
     prev_vel = Vector3d(0, 0, 0);
     binit_ = false;
+    f = Vector3d(0, 0, 0);
     prev_t = -1.0;
+    integral = Vector3d::Zero();
   }
   quadrotor_msgs::Px4ctrlDebug calculateControl(const Desired_State_t &des,
       const Odom_Data_t &odom,
@@ -182,8 +185,9 @@ public:
 	//TODO:自适应率
   bool binit_;
   
+  
 private:
-  Vector3d integral = Vector3d::Zero();
+ 
   double prev_t;
   Vector3d prev_vel;
   Vector3d prev_f_;

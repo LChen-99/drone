@@ -334,21 +334,28 @@ Neural_Fly_Control::calculateControl(const Desired_State_t &des,
   /* WRITE YOUR CODE HERE */
   
   TicToc calcu;
-  
-	Odom_Data_t cur = odom; 
-	Eigen::Vector3d des_acc(0.0, 0.0, 0.0);
-  Eigen::Vector3d Kp,Kv, Kvi;
+  Eigen::Vector3d Kp, Kv, Kvi;
   Kp << param_.gain.Kp0, param_.gain.Kp1, param_.gain.Kp2;
   Kv << param_.gain.Kv0, param_.gain.Kv1, param_.gain.Kv2;
   Kvi << param_.gain.Kvi0, param_.gain.Kvi1, param_.gain.Kvi2;
-  integral += 1.0 / param_.ctrl_freq_max * ((des.v - cur.v) + (des.p - cur.p));
-  des_acc = des.a + Kv.asDiagonal() * (des.v - cur.v) + Kp.asDiagonal() * (des.p - cur.p) + Kvi.asDiagonal() * integral;
-  ROS_DEBUG("des.v - cur.v: %f, %f, %f\n", (des.v.x() - cur.v.x()), (des.v.y() - cur.v.y()), (des.v.z() - cur.v.z()));
-  ROS_DEBUG("des.p - cur.p: %f, %f, %f\n", (des.p.x() - cur.p.x()), (des.p.y() - cur.p.y()), (des.p.z() - cur.p.z()));
+	Odom_Data_t cur = odom; 
+	Eigen::Vector3d des_acc(0.0, 0.0, 0.0);
+  
+  Eigen::Vector3d s = (cur.v - des.v) + Kp.asDiagonal() * (cur.p - des.p);
+  Eigen::Vector3d v_r = des.v -  Kp.asDiagonal() * (cur.p - des.p);
+  Eigen::Vector3d dv_r = des.a -  Kp.asDiagonal() * (cur.v - des.v);
+  
+  integral += 1.0 / param_.ctrl_freq_max * s;
+  des_acc = dv_r - Kv.asDiagonal() * s - Kvi.asDiagonal() * integral;
+  // des_acc = dv_r - Kv.asDiagonal() * s;
+  // des_acc = des.a + Kp.asDiagonal() * (des.v - cur.v) + Kp.asDiagonal() * (des.p - cur.p) + Kvi.asDiagonal() * integral;
+  // ROS_INFO("integral: %f, %f, %f\n", integral.x(), integral.y(), integral.z());
+  // ROS_INFO("Kv.asDiagonal() * s: %f, %f, %f\n", (Kv.asDiagonal() * s.x()), (Kv.asDiagonal() * s.y()), (Kv.asDiagonal() * s.z()));
+  // ROS_INFO("des.p - cur.p: %f, %f, %f\n", (des.p.x() - cur.p.x()), (des.p.y() - cur.p.y()), (des.p.z() - cur.p.z()));
   des_acc += Eigen::Vector3d(0,0,param_.gra);
-
+  // ROS_INFO("des_acc: %f, %f, %f\n", des_acc.x(), des_acc.y(), des_acc.z());
   if(param_.disturbance_obs.use && binit_){
-    Vector3d f;
+    
     if(!param_.disturbance_obs.constant){
       Matrix<double, 11, 1> feature;
       feature.block(0, 0, 3, 1) = odom.v;
@@ -356,7 +363,7 @@ Neural_Fly_Control::calculateControl(const Desired_State_t &des,
       feature(4, 0) = odom.q.y();
       feature(5, 0) = odom.q.z();
       feature(6, 0) = odom.q.w();
-      double hover_ = 910.0 / (1564.0 * 1000.0);
+      double hover_ = 910.0 / (1400.0 * 1000.0);
 
       feature(7, 0) = pwm.pwm[0] * hover_;
       feature(8, 0) = pwm.pwm[1] * hover_;
@@ -372,6 +379,7 @@ Neural_Fly_Control::calculateControl(const Desired_State_t &des,
       if(abs(f(2)) > 1.0){
         f(2) = 1.0 * f(2) / abs(f(2));
       }
+      
       // f(2) = 0;
       des_acc -= f;
     }else{
@@ -472,7 +480,7 @@ void Neural_Fly_Control::updateAdapt(double t, const Desired_State_t &des,
 	feature(5, 0) = odom.q.z();
 	feature(6, 0) = odom.q.w();
   // 1564是悬停PWM值
-	double hover_ = 910.0 / (1500.0 * 1000.0);
+	double hover_ = 910.0 / (1400.0 * 1000.0);
 
 	feature(7, 0) = pwm.pwm[0] * hover_;
 	feature(8, 0) = pwm.pwm[1] * hover_;
@@ -503,6 +511,8 @@ void Neural_Fly_Control::updateAdapt(double t, const Desired_State_t &des,
   // cout << "a_w = " << a_w << endl;
 	Vector3d fu(0, 0, u * thr2acc_);
 	Vector3d f_measurement = (a_w - Eigen::Vector3d(0, 0, -param_.gra) - cur.q * fu);
+  disturbance_mea = f_measurement;
+  ROS_INFO("disturbance_mea: %lf, %lf, %lf", disturbance_mea.x(), disturbance_mea.y(), disturbance_mea.z());
 	Vector3d s = (cur.v - des.v) + (cur.p - des.p);
 	// 更新a
 	Kalman->update(f_measurement, s, phi_output);
@@ -517,7 +527,7 @@ void Neural_Fly_Control::updateAdapt(double t, const Desired_State_t &des,
 		binit_ = true;
     ROS_INFO("obs init!");
 	}
-  disturbance_mea = f_measurement;
+  
   prev_t = t;
 	prev_vel = cur.v;
 	// cout << "f_measurement = " << f_measurement << endl;

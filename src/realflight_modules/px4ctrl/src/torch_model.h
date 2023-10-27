@@ -11,7 +11,7 @@ public:
 		try {
 	// Deserialize the ScriptModule from a file using torch::jit::load().
 			module_ = torch::jit::load("/home/luochen/neural-fly-main/torch_script_eval.pt");
-			//第一次传播速度很慢，初始化一下。。。
+			
 			std::vector<torch::jit::IValue> inputs;
 			inputs.push_back(torch::rand({11}, at::kDouble) );	
 			module_.forward(inputs);

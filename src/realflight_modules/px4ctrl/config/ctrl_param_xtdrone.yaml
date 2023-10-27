@@ -26,7 +26,7 @@ auto_takeoff_land:
     no_RC: true
     takeoff_height: 2 # m
     takeoff_land_speed: 0.3 # m/s
-    fly_speed: 0.3 # m/s
+    fly_speed: 0.6 # m/s
 
 thrust_model: # The model that maps thrust signal u(0~1) to real thrust force F(Unit:N): F=K1*Voltage^K2*(K3*u^2+(1-K3)*u). 
     print_value: true # display the value of “thr_scale_compensate” or “hover_percentage” during thrust model estimating.
@@ -36,23 +36,23 @@ thrust_model: # The model that maps thrust signal u(0~1) to real thrust force F(
     K2: 1.6942 # Needs precise calibration!
     K3: 0.6786 # Needs precise calibration! K3 equals THR_MDL_FAC in https://docs.px4.io/master/en/config_mc/pid_tuning_guide_multicopter.html.
     # approximate thrust mapping parameters
-    hover_percentage: 0.5  # Thrust percentage in Stabilize/Arco mode # *
+    hover_percentage: 0.385  # Thrust percentage in Stabilize/Arco mode # *
 
 gain: 
     # Cascade PID controller. Recommend to read the code.
-    Kp0: 5
-    Kp1: 7.5
-    Kp2: 5
-    Kv0: 5
-    Kv1: 5.5
-    Kv2: 5
+    Kp0: 1
+    Kp1: 1
+    Kp2: 1
+    Kv0: 2
+    Kv1: 2.0
+    Kv2: 2.0
     # ↓↓↓ No use now --
-    Kvi0: 0.1
-    Kvi1: 0.1
-    Kvi2: 0.1
-    Kvd0: 0.0
-    Kvd1: 0.0
-    Kvd2: 0.0
+    Kvi0: 0.3
+    Kvi1: 0.3
+    Kvi2: 0.3
+    Kvd0: 0.3
+    Kvd1: 0.3
+    Kvd2: 0.3
     # ↓↓↓ Only used in rate control mode.
     KAngR: 20.0
     KAngP: 20.0
@@ -73,15 +73,15 @@ msg_timeout:
 
 disturbance_obs:
     constant: false # net output set to constant
-    use: false     # use in controller
-    R: 40.0             
-    Q: 1.0
-    P: 2.0
+    use: true     # use in controller
+    R: 25            
+    Q: 1
+    P: 1.0
     lamda: 0.01
     
 
 
-csv_filename:   "/home/luochen/data/circle_nowind.csv"
+csv_filename:   "/home/luochen/project_doc/drone_msproject/neural-fly/sim_data_x/temp/data.csv"
 prefix: "/iris_0"
-model_path: "/home/luochen/neural-fly-main/torch_script_eval.pt"
+model_path: "/home/luochen/project_doc/drone_msproject/neural-fly/neural_net.pt"
 

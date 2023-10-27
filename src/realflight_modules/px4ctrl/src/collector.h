@@ -19,7 +19,7 @@ public:
             
         }else{
             ROS_INFO("open file");
-            outfile << "t,p,v,p_d,v_d,q,pwm,a,f_obs,f_mea,T_sp,q_sp,thr2acc,volt,bat_percentage" << std::endl;
+            outfile << "t,p,v,p_d,v_d,q,pwm,a,f_obs,f_mea,T_sp,q_sp,integral,thr2acc,volt,bat_percentage" << std::endl;
         }
     }
     

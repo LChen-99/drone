@@ -9,7 +9,7 @@ Traj TrajGenerator::Generator(const MatrixXd& waypoints){
     MatrixXd d = waypoints.block(0, 1, 3, n - 1) - waypoints.block(0, 0, 3, n - 1);
     MatrixXd d_square = (d.row(0).array()).pow(2) + (d.row(1).array()).pow(2) + (d.row(2).array()).pow(2);
     
-    MatrixXd d0 = 2 * d_square.array().sqrt();
+    MatrixXd d0 = 2.5 * d_square.array().sqrt();
    
     for(int i = 1; i < d0.cols(); i++){
         d0(i) = d0(i - 1) + d0(i);
@@ -42,8 +42,7 @@ void TrajGenerator::RandomGenerator(double range){
     srand(unsigned(time(NULL)));
     cout << "generator point randomly" << endl;
     Eigen::Matrix3d waypoints = Eigen::Matrix3d::Random() * range;
-    // y轴范围拉长
-    // waypoints.row(1) =  waypoints.row(1) * 2;
+    
     Vector3d PO = initial_pos - last_pos;
     Vector3d PA = PO + waypoints.col(1);
     Vector3d PB = PO + waypoints.col(2);

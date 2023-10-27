@@ -58,6 +58,7 @@ public:
 	ros::ServiceServer collect_trigger;
 	quadrotor_msgs::Px4ctrlDebug debug_msg; //debug
 	bool landing;
+	size_t hover_times;
 	Eigen::Vector4d hover_pose;
 	ros::Time last_set_hover_pose_time;
 
@@ -102,8 +103,9 @@ public:
 		collector.outfile << "\"[" << controller->disturbance_mea(0) << "," << controller->disturbance_mea(1) << "," << controller->disturbance_mea(2) << "]\",";
 		collector.outfile << u.thrust << ",";
 		collector.outfile << "\"[" << u.q.w() << "," << u.q.x() << "," << u.q.y() << "," << u.q.z() << "]\",";
+		collector.outfile << "\"[" << controller->integral.x() << "," << controller->integral.x() << "," << controller->integral.x() << "]\",";
 		collector.outfile << controller->thr2acc_  << "," << bat_data.volt << "," << bat_data.percentage << std::endl;
-
+		
 	}
 private:
 	State_t state; // Should only be changed in PX4CtrlFSM::process() function!
