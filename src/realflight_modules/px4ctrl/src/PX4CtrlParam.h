@@ -76,7 +76,9 @@ public:
 		double P;
 	};
 	Eigen::Matrix4d T;
+	Eigen::Matrix4d T_down;
 	std::string body_T_cam;
+	std::string body_T_camdown;
 	Gain gain;
 	RotorDrag rt_drag;
 	MsgTimeout msg_timeout;

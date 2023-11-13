@@ -159,11 +159,11 @@ void Mark_Data_t::feedTagCam(geometry_msgs::PoseWithCovarianceStampedConstPtr pM
     Eigen::Matrix4d w_T_odom = Eigen::Matrix4d::Identity();
     w_T_odom.block<3, 3>(0, 0) = (*odom_data).q.matrix();
     w_T_odom.block<3, 1>(0, 3) = (*odom_data).p;
-    // std::cout << w_T_odom << std::endl;
+    
     Eigen::Matrix4d w_T_cam = w_T_odom * odom_T_cam;
     recv_new_msg = true;
     if(n == 1) {
-        
+        std::cout << "Find Tag!" << std::endl;
         p.x() = pMsg->pose.pose.position.x;
         p.y() = pMsg->pose.pose.position.y;
         p.z() = pMsg->pose.pose.position.z;
@@ -177,6 +177,39 @@ void Mark_Data_t::feedTagCam(geometry_msgs::PoseWithCovarianceStampedConstPtr pM
         mark_p = w_T_cam.block<3,3>(0,0) * mark_p + w_T_cam.block<3, 1>(0, 3);
         p = p * n / (n + 1) + mark_p / (n + 1);
     }
+    if(times % 10)
+        ROS_INFO("x: %lf, y:%lf, z:%lf", p.x(), p.y(),p.z());
+};
+void Mark_Data_t::feedTagCamDown(geometry_msgs::PoseWithCovarianceStampedConstPtr pMsg, const Eigen::Matrix4d& odom_T_cam, const Odom_Data_t* odom_data){
+    ros::Time now = ros::Time::now();
+    times++;
+    
+    rcv_stamp = now;
+    n++;
+    
+    Eigen::Matrix4d w_T_odom = Eigen::Matrix4d::Identity();
+    w_T_odom.block<3, 3>(0, 0) = (*odom_data).q.matrix();
+    w_T_odom.block<3, 1>(0, 3) = (*odom_data).p;
+    // std::cout << w_T_odom << std::endl;
+    Eigen::Matrix4d w_T_cam = w_T_odom * odom_T_cam;
+    recv_new_msg = true;
+    if(n == 1) {
+        std::cout << "Find Tag!" << std::endl;
+        p.x() = pMsg->pose.pose.position.x;
+        p.y() = pMsg->pose.pose.position.y;
+        p.z() = pMsg->pose.pose.position.z;
+        p =  w_T_cam.block<3,3>(0,0) * p + w_T_cam.block<3, 1>(0, 3);
+
+    }else{//均值滤波
+        Eigen::Vector3d mark_p;
+        mark_p.x() = pMsg->pose.pose.position.x;
+        mark_p.y() = pMsg->pose.pose.position.y;
+        mark_p.z() = pMsg->pose.pose.position.z;
+        mark_p = w_T_cam.block<3,3>(0,0) * mark_p + w_T_cam.block<3, 1>(0, 3);
+        p = p * n / (n + 1) + mark_p / (n + 1);
+    }
+    if(times % 10)
+        ROS_INFO("x: %lf, y:%lf, z:%lf", p.x(), p.y(),p.z());
 };
 
 void Mark_Data_t::feedTagWorld(geometry_msgs::PoseStampedConstPtr pMsg){

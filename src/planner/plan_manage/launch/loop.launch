@@ -6,8 +6,8 @@
         <remap from="~odom" to="/iris_0/mavros/vision_pose/odom"/>
         <param name="r" value="1" />
         <param name="t" value="6.283185" />
-        <param name="a" value="1" />
-        <param name="b" value="0.75" />
+        <param name="a" value="0.75" />
+        <param name="b" value="0.4" />
         <param name="trajectory_type" value="1" />
 
     </node>

@@ -70,8 +70,10 @@ void Parameter_t::config_from_ros_handle(const ros::NodeHandle &nh)
 	read_essential_param(nh, "disturbance_obs/lamda", disturbance_obs.lamda);
 	read_essential_param(nh, "disturbance_obs/P", disturbance_obs.P);
 	read_essential_param(nh, "body_T_cam", body_T_cam);
+	read_essential_param(nh, "body_T_camdown", body_T_camdown);
 	max_angle /= (180.0 / M_PI);
 	readParameters(body_T_cam, T);
+	readParameters(body_T_camdown, T_down);
 	
 	if ( takeoff_land.enable_auto_arm && !takeoff_land.enable )
 	{

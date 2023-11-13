@@ -82,7 +82,7 @@ public:
   Mark_Data_t();
   void feedTagCam(geometry_msgs::PoseWithCovarianceStampedConstPtr pMsg, const Eigen::Matrix4d& odom_T_cam, const Odom_Data_t* odom_data);
   void feedTagWorld(geometry_msgs::PoseStampedConstPtr pMsg);
-  
+  void feedTagCamDown(geometry_msgs::PoseWithCovarianceStampedConstPtr pMsg, const Eigen::Matrix4d& odom_T_cam, const Odom_Data_t* odom_data);
 };
 
 class Pwm_Data_t

@@ -44,9 +44,15 @@ int main(int argc, char *argv[])
                                          ros::TransportHints().tcpNoDelay());
 
     ros::Subscriber mark_sub =
-        nh.subscribe<geometry_msgs::PoseWithCovarianceStamped>("/tag_pose",
+        nh.subscribe<geometry_msgs::PoseWithCovarianceStamped>("/tag_pose_front",
                                          100,
                                          boost::bind(&Mark_Data_t::feedTagCam, &fsm.mark_data, _1, param.T, &fsm.odom_data),
+                                         ros::VoidConstPtr(),
+                                         ros::TransportHints().tcpNoDelay());
+    ros::Subscriber mark_down_sub =
+        nh.subscribe<geometry_msgs::PoseWithCovarianceStamped>("/tag_pose_down",
+                                         100,
+                                         boost::bind(&Mark_Data_t::feedTagCamDown, &fsm.mark_data, _1, param.T_down, &fsm.odom_data),
                                          ros::VoidConstPtr(),
                                          ros::TransportHints().tcpNoDelay());
     // /tag_pose

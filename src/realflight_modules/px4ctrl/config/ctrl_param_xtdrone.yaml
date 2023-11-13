@@ -12,6 +12,7 @@ max_manual_vel: 1
 max_angle: 30  # Attitude angle limit in degree. A negative value means no limit.
 low_voltage: 13.2 # 4S battery
 body_T_cam: "/home/luochen/drone-project/drone-project/src/realflight_modules/px4ctrl/config/body_T_cam0_xtdrone.yaml"
+body_T_camdown: "/home/luochen/project_doc/drone_msproject/drone/src/realflight_modules/px4ctrl/config/body_T_camdown_xtdrone.yaml"
 # body_T_cam: "body_T_cam0_xtdrone.yaml"
 rc_reverse: # *
     roll: false
@@ -24,7 +25,7 @@ auto_takeoff_land:
     enable: true
     enable_auto_arm: true
     no_RC: true
-    takeoff_height: 2 # m
+    takeoff_height: 5 # m
     takeoff_land_speed: 0.3 # m/s
     fly_speed: 0.6 # m/s
 
@@ -43,9 +44,9 @@ gain:
     Kp0: 1
     Kp1: 1
     Kp2: 1
-    Kv0: 2
-    Kv1: 2.0
-    Kv2: 2.0
+    Kv0: 1.8
+    Kv1: 1.0
+    Kv2: 1.8
     # ↓↓↓ No use now --
     Kvi0: 0.3
     Kvi1: 0.3
@@ -73,9 +74,9 @@ msg_timeout:
 
 disturbance_obs:
     constant: false # net output set to constant
-    use: true     # use in controller
-    R: 25            
-    Q: 1
+    use: false     # use in controller
+    R: 40          
+    Q: 2.0
     P: 1.0
     lamda: 0.01
     

@@ -2,8 +2,8 @@
 
 	<node pkg="px4ctrl" type="px4ctrl_node" name="px4ctrl" output="screen">
         	<!-- <remap from="~odom" to="/vicon_imu_ekf_odom" /> -->
-			
-			<remap from="~odom" to="/iris_0/mavros/vision_pose/odom" />
+			<!-- <remap from="~odom" to="/iris_0/mavros/vision_pose/odom" /> -->
+			<remap from="~odom" to="/vins_fusion/imu_propagate" />	
 
 		<remap from="~cmd" to="/position_cmd" />
 
