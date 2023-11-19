@@ -224,8 +224,8 @@ Controller::estimateThrustModel(
     if(param.thr_map.print_val){
       tick++;
       if(tick % 100 == 0){
-        ROS_DEBUG("thr2acc = %6.3f", thr2acc_);
-        ROS_DEBUG("hover_percentage = %6.3f", param_.gra / thr2acc_);
+        ROS_INFO("thr2acc = %6.3f", thr2acc_);
+        ROS_INFO("hover_percentage = %6.3f", param_.gra / thr2acc_);
         
       }
       
@@ -357,13 +357,14 @@ Neural_Fly_Control::calculateControl(const Desired_State_t &des,
   if(param_.disturbance_obs.use && binit_){
     
     if(!param_.disturbance_obs.constant){
+      // Matrix<double, 7, 1> feature;
       Matrix<double, 11, 1> feature;
       feature.block(0, 0, 3, 1) = odom.v;
       feature(3, 0) = odom.q.x();
       feature(4, 0) = odom.q.y();
       feature(5, 0) = odom.q.z();
       feature(6, 0) = odom.q.w();
-      double hover_ = 910.0 / (1400.0 * 1000.0);
+      double hover_ = 1.0 / 1000.0;
 
       feature(7, 0) = pwm.pwm[0] * hover_;
       feature(8, 0) = pwm.pwm[1] * hover_;
@@ -376,11 +377,11 @@ Neural_Fly_Control::calculateControl(const Desired_State_t &des,
       f(1) = phi_output.transpose() * a.block<3, 1>(3, 0);
       f(2) = phi_output.transpose() * a.block<3, 1>(6, 0);
       //只对z轴限制
-      if(abs(f(2)) > 1.0){
-        f(2) = 1.0 * f(2) / abs(f(2));
-      }
+      // if(abs(f(2)) > 1.0){
+      //   f(2) = 0.5 * f(2) / abs(f(2));
+      // }
       
-      // f(2) = 0;
+      f(2) = 0; 
       des_acc -= f;
     }else{
       auto a = Kalman->get_a();
@@ -392,7 +393,7 @@ Neural_Fly_Control::calculateControl(const Desired_State_t &des,
       // if(abs(f(2)) > 1.0){
       //   f(2) = 1.0 * f(2) / abs(f(2));
       // }
-      f(2) = 0;  
+      // f(2) = 0;  
       des_acc -= f; 
     }
     disturbance_obs = f;
@@ -400,7 +401,7 @@ Neural_Fly_Control::calculateControl(const Desired_State_t &des,
   }
   // std::cout << "des_acc = " << des_acc.transpose() << endl;
   // PID
-  if(0){
+  if(1){
     Eigen::Matrix3d rotation_q = cur.q.toRotationMatrix();
     Eigen::Matrix3d rotation_des = Eigen::Matrix3d::Zero();
     Eigen::Vector3d rotation_z = rotation_q.col(2);
@@ -480,7 +481,7 @@ void Neural_Fly_Control::updateAdapt(double t, const Desired_State_t &des,
 	feature(5, 0) = odom.q.z();
 	feature(6, 0) = odom.q.w();
   // 1564是悬停PWM值
-	double hover_ = 910.0 / (1400.0 * 1000.0);
+	double hover_ = 1.0 /  1000.0;
 
 	feature(7, 0) = pwm.pwm[0] * hover_;
 	feature(8, 0) = pwm.pwm[1] * hover_;
@@ -512,7 +513,7 @@ void Neural_Fly_Control::updateAdapt(double t, const Desired_State_t &des,
 	Vector3d fu(0, 0, u * thr2acc_);
 	Vector3d f_measurement = (a_w - Eigen::Vector3d(0, 0, -param_.gra) - cur.q * fu);
   disturbance_mea = f_measurement;
-  ROS_INFO("disturbance_mea: %lf, %lf, %lf", disturbance_mea.x(), disturbance_mea.y(), disturbance_mea.z());
+  // ROS_INFO("disturbance_mea: %lf, %lf, %lf", disturbance_mea.x(), disturbance_mea.y(), disturbance_mea.z());
 	Vector3d s = (cur.v - des.v) + (cur.p - des.p);
 	// 更新a
 	Kalman->update(f_measurement, s, phi_output);

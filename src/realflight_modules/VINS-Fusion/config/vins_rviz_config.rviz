@@ -6,7 +6,8 @@ Panels:
       Expanded:
         - /Global Options1
         - /VIOGroup1
-        - /VIOGroup1/VIOPath1
+        - /VIOGroup1/PointCloud1
+        - /VIOGroup1/HistoryPointCloud1
         - /GlobalGroup1/CarModel1
         - /Odometry1/Shape1
         - /Path2
@@ -224,7 +225,7 @@ Visualization Manager:
             Min Value: -10
             Value: true
           Axis: Z
-          Channel Name: intensity
+          Channel Name: z
           Class: rviz/PointCloud
           Color: 255; 255; 255
           Color Transformer: Intensity
@@ -237,13 +238,13 @@ Visualization Manager:
           Position Transformer: XYZ
           Queue Size: 10
           Selectable: true
-          Size (Pixels): 2
+          Size (Pixels): 2.5
           Size (m): 0.009999999776482582
           Style: Points
           Topic: /vins_fusion/point_cloud
           Unreliable: false
           Use Fixed Frame: true
-          Use rainbow: true
+          Use rainbow: false
           Value: true
         - Alpha: 1
           Autocompute Intensity Bounds: true
@@ -254,10 +255,10 @@ Visualization Manager:
           Axis: Z
           Channel Name: intensity
           Class: rviz/PointCloud
-          Color: 0; 255; 0
+          Color: 245; 121; 0
           Color Transformer: FlatColor
           Decay Time: 100
-          Enabled: true
+          Enabled: false
           Invert Rainbow: false
           Max Color: 255; 255; 255
           Min Color: 0; 0; 0
@@ -265,14 +266,14 @@ Visualization Manager:
           Position Transformer: XYZ
           Queue Size: 10
           Selectable: true
-          Size (Pixels): 1
+          Size (Pixels): 1.5
           Size (m): 0.009999999776482582
           Style: Points
           Topic: /vins_fusion/margin_cloud
           Unreliable: false
           Use Fixed Frame: true
           Use rainbow: true
-          Value: true
+          Value: false
         - Class: rviz/Image
           Enabled: true
           Image Topic: /vins_fusion/image_track
@@ -453,6 +454,14 @@ Visualization Manager:
       Topic: /drone_0_traj_generator/des_path
       Unreliable: false
       Value: true
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /estimated_marker
+      Name: Marker
+      Namespaces:
+        basic_shapes: true
+      Queue Size: 100
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 0; 0; 0
@@ -479,7 +488,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 15.242691993713379
+      Distance: 23.17879295349121
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -487,17 +496,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 6.063375473022461
-        Y: -2.6698851585388184
-        Z: 5.841255187988281e-06
+        X: 5.618332862854004
+        Y: -1.272334337234497
+        Z: 8.225440979003906e-06
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.5697963237762451
+      Pitch: 0.6147975921630859
       Target Frame: world
-      Yaw: 0.11231297999620438
+      Yaw: 3.4773175716400146
     Saved: ~
 Window Geometry:
   Displays:

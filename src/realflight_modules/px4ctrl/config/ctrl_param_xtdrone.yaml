@@ -4,7 +4,7 @@
 #########################################################################
 
 mass        : 1.4 # kg 
-gra         : 9.81 
+gra         : 9.805 
 pose_solver : 1     # 0:From ZhepeiWang (drag & less singular) 1:From ZhepeiWang, 2:From rotor-drag    
 ctrl_freq_max   : 50.0
 use_bodyrate_ctrl: false
@@ -25,8 +25,8 @@ auto_takeoff_land:
     enable: true
     enable_auto_arm: true
     no_RC: true
-    takeoff_height: 5 # m
-    takeoff_land_speed: 0.3 # m/s
+    takeoff_height: 5.5 # m
+    takeoff_land_speed: 0.4 # m/s
     fly_speed: 0.6 # m/s
 
 thrust_model: # The model that maps thrust signal u(0~1) to real thrust force F(Unit:N): F=K1*Voltage^K2*(K3*u^2+(1-K3)*u). 
@@ -41,16 +41,16 @@ thrust_model: # The model that maps thrust signal u(0~1) to real thrust force F(
 
 gain: 
     # Cascade PID controller. Recommend to read the code.
-    Kp0: 1
-    Kp1: 1
-    Kp2: 1
-    Kv0: 1.8
-    Kv1: 1.0
-    Kv2: 1.8
+    Kp0: 2  #2
+    Kp1: 2  #2
+    Kp2: 2  #2
+    Kv0: 1.5  #3
+    Kv1: 1.5  #3
+    Kv2: 1.5  #3
     # ↓↓↓ No use now --
-    Kvi0: 0.3
-    Kvi1: 0.3
-    Kvi2: 0.3
+    Kvi0: 0.05  #0.05
+    Kvi1: 0.05  #0.05
+    Kvi2: 0.05  #0.05
     Kvd0: 0.3
     Kvd1: 0.3
     Kvd2: 0.3
@@ -78,11 +78,11 @@ disturbance_obs:
     R: 40          
     Q: 2.0
     P: 1.0
-    lamda: 0.01
+    lamda: 0.02    #0.02效果很好
     
 
 
-csv_filename:   "/home/luochen/project_doc/drone_msproject/neural-fly/sim_data_x/temp/data.csv"
+csv_filename:   "/home/luochen/project_doc/drone_msproject/neural-fly/sim_data_-x/experiment/data.csv"
 prefix: "/iris_0"
-model_path: "/home/luochen/project_doc/drone_msproject/neural-fly/neural_net.pt"
+model_path: "/home/luochen/project_doc/drone_msproject/neural-fly/net.pt"
 

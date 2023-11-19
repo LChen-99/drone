@@ -112,7 +112,7 @@ int main(int argc, char *argv[])
     fsm.set_FCU_mode_srv = nh.serviceClient<mavros_msgs::SetMode>(prefix + "/mavros/set_mode");
     fsm.arming_client_srv = nh.serviceClient<mavros_msgs::CommandBool>(prefix + "/mavros/cmd/arming");
     fsm.reboot_FCU_srv = nh.serviceClient<mavros_msgs::CommandLong>(prefix + "/mavros/cmd/command");
-
+    fsm.marker_pub = nh.advertise<visualization_msgs::Marker>("/estimated_marker", 10);
     ros::Duration(0.5).sleep();
     
     if (param.takeoff_land.no_RC)

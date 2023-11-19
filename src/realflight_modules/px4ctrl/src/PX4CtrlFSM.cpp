@@ -697,7 +697,37 @@ void PX4CtrlFSM::publish_markpose(const ros::Time &stamp){
 	msg.pose.position.x = mark_data.p.x();
 	msg.pose.position.y = mark_data.p.y();
 	msg.pose.position.z = mark_data.p.z();
+	visualization_msgs::Marker marker_msg;
+	if(mark_data.recv_new_msg == true){
+		marker_msg.header.frame_id = "world";
+		marker_msg.header.stamp = stamp;
+		marker_msg.ns = "basic_shapes";
+		marker_msg.id = 0;
+		marker_msg.action = visualization_msgs::Marker::ADD;
+	
+		// Set the pose of the marker.  This is a full 6DOF pose relative to the frame/time specified in the header
+		marker_msg.pose.position.x = mark_data.p.x();
+		marker_msg.pose.position.y = mark_data.p.y();
+		marker_msg.pose.position.z = mark_data.p.z();
+		marker_msg.pose.orientation.x = 0.0;
+		marker_msg.pose.orientation.y = 0.0;
+		marker_msg.pose.orientation.z = 0.0;
+		marker_msg.pose.orientation.w = 1.0;
+		marker_msg.scale.x = 1.0;
+		marker_msg.scale.y = 1.0;
+		marker_msg.scale.z = 0.05;
+	
+		// Set the color -- be sure to set alpha to something non-zero!
+		marker_msg.color.r = 1.0f;
+		marker_msg.color.g = 0.0f;
+		marker_msg.color.b = 0.0f;
+		marker_msg.color.a = 1.0;
 
+		marker_msg.type = visualization_msgs::Marker::CYLINDER;
+		marker_pub.publish(marker_msg);
+	}
+	
+	
 	mark_pose_pub.publish(msg);
 }
 bool PX4CtrlFSM::toggle_offboard_mode(bool on_off)

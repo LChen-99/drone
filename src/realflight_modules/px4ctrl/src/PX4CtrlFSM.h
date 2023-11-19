@@ -10,6 +10,7 @@
 #include <mavros_msgs/SetMode.h>
 #include <mavros_msgs/CommandLong.h>
 #include <mavros_msgs/CommandBool.h>
+#include <visualization_msgs/Marker.h>
 #include "collector.h"
 #include "neucontroller.h"
 #include "input.h"
@@ -50,6 +51,7 @@ public:
 	Collector collector;
 	ros::Publisher traj_start_trigger_pub;
 	ros::Publisher mark_pose_pub;
+	ros::Publisher marker_pub;
 	ros::Publisher ctrl_FCU_pub;
 	ros::Publisher debug_pub; //debug
 	ros::ServiceClient set_FCU_mode_srv;
