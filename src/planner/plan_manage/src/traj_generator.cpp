@@ -70,7 +70,7 @@ void cmdCallback(const ros::TimerEvent &e)
     pos = generator.traj_pos_[points_size - 1];
     vel.setZero();
     acc.setZero();
-    if(times - points_size > 100){
+    if(times - points_size > 200){
       generator.last_pos = cur_pos;
       generator.RandomGenerator();
       // des_path.poses.clear();

@@ -44,9 +44,9 @@ gain:
     Kp0: 2  #2
     Kp1: 2  #2
     Kp2: 2  #2
-    Kv0: 1.5  #3
-    Kv1: 1.5  #3
-    Kv2: 1.5  #3
+    Kv0: 3  #3
+    Kv1: 3  #3
+    Kv2: 3  #3
     # ↓↓↓ No use now --
     Kvi0: 0.05  #0.05
     Kvi1: 0.05  #0.05
@@ -74,7 +74,7 @@ msg_timeout:
 
 disturbance_obs:
     constant: false # net output set to constant
-    use: false     # use in controller
+    use: true     # use in controller
     R: 40          
     Q: 2.0
     P: 1.0

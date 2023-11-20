@@ -6,19 +6,23 @@ Traj TrajGenerator::Generator(const MatrixXd& waypoints){
 
     int n = waypoints.cols();
     Traj res;
+    // VecXd times= AllocateTime(waypoints);
     MatrixXd d = waypoints.block(0, 1, 3, n - 1) - waypoints.block(0, 0, 3, n - 1);
     MatrixXd d_square = (d.row(0).array()).pow(2) + (d.row(1).array()).pow(2) + (d.row(2).array()).pow(2);
     
-    MatrixXd d0 = 2.5 * d_square.array().sqrt();
-   
-    for(int i = 1; i < d0.cols(); i++){
-        d0(i) = d0(i - 1) + d0(i);
+    MatrixXd times = 2 * d_square.array().sqrt();
+    for(int i = 1; i < times.cols(); i++){
+        times(i) = times(i - 1) + times(i);
     }
+    // for(int i = 1; i < times.cols(); i++){
+    //     times(i) = times(i - 1) + times(i);
+    // }
+    // cout << "times = " << times.transpose() << endl;
      // 时间
     traj_time_.resize(n);
     traj_time_[0] = 0;
     for(int i = 1; i < n; i++){
-        traj_time_[i] = d0(i - 1);
+        traj_time_[i] = times(i - 1);
     }
     std::vector<Eigen::MatrixXd> Polynomial_coefficients;
     Polynomial_coefficients.push_back(CalcuCoef(waypoints.row(0)));
@@ -37,24 +41,72 @@ Traj TrajGenerator::Generator(const MatrixXd& waypoints){
     }
     return res;
 }
+Eigen::VectorXd TrajGenerator::AllocateTime(const MatrixXd &waypoint, double max_vel_, double max_accel_) const {
+    Eigen::VectorXd times = VecXd::Zero(waypoint.cols() - 1);
+    const double t = max_vel_ / max_accel_;
+    const double dist_threshold_1 = max_accel_ * t * t;
 
+    double segment_t;
+    for (unsigned int i = 1; i < waypoint.rows(); ++i) {
+        double delta_dist = (waypoint.col(i) - waypoint.col(i - 1)).norm();
+        if (delta_dist > dist_threshold_1) {
+            segment_t = t * 2 + (delta_dist - dist_threshold_1) / max_vel_;
+        } else {
+            segment_t = std::sqrt(delta_dist / max_accel_);
+        }
+
+        times[i - 1] = segment_t;
+    }
+
+    return times;
+}
+bool TrajGenerator::checkTraj(const Traj& traj, double x, double y, double z){
+    double max_x = initial_pos(0) + x;
+    double max_y = initial_pos(1) + y;
+    double max_z = initial_pos(2) + z;
+    double min_x = initial_pos(0) - x;
+    double min_y = initial_pos(1) - y;
+    double min_z = initial_pos(2) - z;
+    for(int i = 0; i < traj.pos.size(); i++){
+        if(traj.pos[i](0)  > max_x || traj.pos[i](0)  < min_x || traj.pos[i](1)  > max_y || traj.pos[i](1)  < min_y || traj.pos[i](2)  > max_z
+        || traj.pos[i](2)  < min_z ) return false;
+
+    }
+    return true;
+}
 void TrajGenerator::RandomGenerator(double range){
     srand(unsigned(time(NULL)));
+    Eigen::Matrix3d waypoints;
+    Vector3d PA, PB;
+    double angle;
+    Traj traj_;
     cout << "generator point randomly" << endl;
-    Eigen::Matrix3d waypoints = Eigen::Matrix3d::Random() * range;
+    do{
+        waypoints = Eigen::Matrix3d::Random() * range;
+        waypoints.row(0) = waypoints.row(0) * 1;
+        waypoints.row(1) = waypoints.row(1) * 0.5;
+        waypoints.row(2) = waypoints.row(2) * 0.5;
+        Vector3d PO = initial_pos - last_pos;
+        PA = PO + waypoints.col(1);
+        PB = PO + waypoints.col(2);
+        Vector3d AB = PB - PA;
+        double cos=PA.dot(AB) /(PA.norm()*AB.norm()); //角度cos值
+        angle = acos(cos) * 180 / M_PI; 
+        waypoints.col(0) = last_pos;
+        waypoints.col(1) = last_pos + PA;
+        waypoints.col(2) = last_pos + PB;
+        
+        traj_ = Generator(waypoints);
+    }while(angle > 60 || !checkTraj(traj_, 1.1, 0.6, 0.6));
     
-    Vector3d PO = initial_pos - last_pos;
-    Vector3d PA = PO + waypoints.col(1);
-    Vector3d PB = PO + waypoints.col(2);
     
-    waypoints.col(0) = last_pos;
-    waypoints.col(1) = last_pos + PA;
-    waypoints.col(2) = last_pos + PB;
+    
+    
     cout << "initial_pos = " << initial_pos.transpose() << endl;
     cout << "last_pos = " << waypoints.col(0).transpose() << endl;
     cout << "A = " << waypoints.col(1).transpose() << endl;
     cout << "B = " << waypoints.col(2).transpose() << endl;
-    Traj traj_ = Generator(waypoints);
+    cout << "angle = " << angle << endl;
     traj_pos_ = traj_.pos;
     traj_vel_ = traj_.vel;
     traj_acc_ = traj_.acc;
